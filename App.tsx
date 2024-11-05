@@ -1,6 +1,54 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { NavigationContainer } from "@react-navigation/native";
+import * as React from "react";
 import { useEffect } from "react";
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from "react-native";
+import { DefaultTheme, PaperProvider } from "react-native-paper";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import 'setimmediate';
+
 import { setupDatabase } from './components/Database/SQLite';
+
+const Tab = createBottomTabNavigator();
+
+// Delete this if Summary Screen is Created
+const SummaryScreen = () => (
+  <View>
+    <Text>Home Screen</Text>
+  </View>
+);
+
+// Delete this if Weight Screen is Created
+const WeightScreen = () => (
+  <View>
+    <Text>Sports Unit Screen</Text>
+  </View>
+);
+
+// Delete this if Foods is Created
+const FoodsScreen = () => (
+  <View>
+    <Text>Calendar Screen</Text>
+  </View>
+);
+
+// Delete this if Profile Screen is Created
+const ProfileScreen = () => (
+  <View>
+    <Text>Profile Screen</Text>
+  </View>
+);
+
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: "#1A5A41",
+    secondary: "#EAE7E7",
+  },
+};
+
 
 export default function App() {
   useEffect(() => {
@@ -17,17 +65,52 @@ export default function App() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-    </View>
+    <PaperProvider theme={theme}>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={{
+            tabBarShowLabel: false,
+          }}
+        >
+          <Tab.Screen
+            name="Summary"
+            component={SummaryScreen}
+            options={{
+              tabBarIcon: () => (
+                <MaterialCommunityIcons name="basketball" size={26} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Weight"
+            component={WeightScreen}
+            options={{
+              tabBarIcon: () => (
+                <MaterialCommunityIcons name="chart-line-variant" size={26} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Foods"
+            component={FoodsScreen}
+            options={{
+              tabBarIcon: () => (
+                <MaterialCommunityIcons name="food" size={26} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="Profil"
+            component={ProfileScreen}
+            options={{
+              tabBarIcon: () => (
+                <MaterialCommunityIcons name="account" size={26} />
+              ),
+            }}
+          />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
