@@ -1,13 +1,12 @@
+import { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
+import { setupDatabase } from "./components/Database/SQLite";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import * as Font from "expo-font";
-import { StyleSheet, Text, View } from "react-native";
 import { PaperProvider } from "react-native-paper";
 import { InputField } from "./atoms/InputField";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { TitleMajor } from "./atoms/TitleMajor";
-import { TitleMinor } from "./atoms/TitleMinor";
-import { TitleMiddle } from "./atoms/TitleMiddle";
 import Header from "./molecules/Header";
 
 function getDate() {
@@ -19,6 +18,19 @@ function getDate() {
 }
 
 export default function App() {
+  useEffect(() => {
+
+    const initializeDatabase = async () => {
+      try {
+
+        await setupDatabase();
+      } catch (error) {
+        console.error('Failed:', error)
+      }
+    };
+    initializeDatabase();
+  }, []);
+
   const [loaded] = Font.useFonts({
     Montserrat: require("./assets/fonts/MontserratBlack.ttf"),
   });
