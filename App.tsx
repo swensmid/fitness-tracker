@@ -1,7 +1,8 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import * as React from "react";
+import React, { useState } from "react";
 import { useEffect } from "react";
+import * as Font from "expo-font";
 import { Text, View } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -9,6 +10,13 @@ import 'setimmediate';
 
 import { setupDatabase } from './components/Database/SQLite';
 
+function getDate() {
+  const today = new Date();
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  const date = today.getDate();
+  return `${month}/${date}/${year}`;
+}
 const Tab = createBottomTabNavigator();
 
 // Delete this if Summary Screen is Created
@@ -63,6 +71,16 @@ export default function App() {
     };
     initializeDatabase();
   }, []);
+
+  const [loaded] = Font.useFonts({
+    Montserrat: require("./assets/fonts/MontserratBlack.ttf"),
+  });
+
+  if (!loaded) {
+    return null;
+  }
+
+  const [currentDate, setCurrentDate] = useState(getDate());
 
   return (
     <PaperProvider theme={theme}>
