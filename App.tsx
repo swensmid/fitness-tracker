@@ -80,8 +80,6 @@ export default function App() {
     return null;
   }
 
-  const [currentDate, setCurrentDate] = useState(getDate());
-
   return (
     <PaperProvider theme={theme}>
       <NavigationContainer>
