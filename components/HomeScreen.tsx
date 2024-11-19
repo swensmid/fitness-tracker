@@ -17,7 +17,7 @@ type Activity = {
 
 const CalorieOverview: React.FC = ({ navigation }: any) => {
   const [activities, setActivities] = useState<Activity[]>([]);
-  const basalMetabolicRate = 2000; // Example BMR value
+  const basalMetabolicRate = 2000;
   const totalCalories = activities.reduce(
     (sum, activity) => sum - activity.calories,
     -basalMetabolicRate
@@ -87,23 +87,23 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1B5E20',
+    backgroundColor: '#1A5A41',
     padding: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#EAE7E7',
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
-    color: '#fff',
+    color: '#EAE7E7',
     textAlign: 'center',
   },
   calorieCircle: {
     alignSelf: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#EAE7E7',
     borderWidth: 10,
     borderColor: '#000',
     width: 240,
@@ -124,19 +124,19 @@ const styles = StyleSheet.create({
   calorieText: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#EAE7E7',
   },
   calorieSubText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#EAE7E7',
   },
   noActivityText: {
-    color: '#fff',
+    color: '#EAE7E7',
     textAlign: 'center',
     marginVertical: 10,
   },
   activityItem: {
-    backgroundColor: '#fff',
+    backgroundColor: '#EAE7E7',
     padding: 15,
     marginVertical: 10,
     borderRadius: 10,
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     gap: 15,
   },
   addButton: {
-    backgroundColor: '#fff',
+    backgroundColor: '#EAE7E7',
     padding: 15,
     borderRadius: 10,
     marginTop: 20,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#1B5E20',
+    color: '#1A5A41',
   },
 });
 
