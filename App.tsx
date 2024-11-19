@@ -1,16 +1,16 @@
-import { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
-import { setupDatabase } from "./components/Database/SQLite";
-import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
-import * as Font from "expo-font";
-import { Text} from "react-native";
-import { DefaultTheme, PaperProvider } from "react-native-paper";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import 'setimmediate';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
+import React, { useState } from "react";
+import { useEffect } from "react";
+import * as Font from "expo-font";
+import { Text, View } from "react-native";
+import { DefaultTheme, PaperProvider } from "react-native-paper";
+import { InputField } from "./atoms/InputField";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import Header from "./molecules/Header";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import HomeScreen from "./components/HomeScreen";
+import setupDatabase from "./components/Database/SQLite";
 
 function getDate() {
   const today = new Date();
@@ -125,11 +125,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
