@@ -4,10 +4,10 @@ import { setupDatabase } from "./components/Database/SQLite";
 import { StatusBar } from "expo-status-bar";
 import React, { useState } from "react";
 import * as Font from "expo-font";
-import { Text} from "react-native";
+import { Text } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import 'setimmediate';
+import "setimmediate";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
@@ -42,7 +42,6 @@ const ProfileScreen = () => (
   </View>
 );
 
-
 const theme = {
   ...DefaultTheme,
   colors: {
@@ -52,16 +51,13 @@ const theme = {
   },
 };
 
-
 export default function App() {
   useEffect(() => {
-
     const initializeDatabase = async () => {
       try {
-
         await setupDatabase();
       } catch (error) {
-        console.error('Failed:', error)
+        console.error("Failed:", error);
       }
     };
     initializeDatabase();
