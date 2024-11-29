@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { UserProvider, useUser } from './UserContext'
 import {
   View,
   Text,
@@ -15,9 +16,14 @@ type Activity = {
   calories: number;
 };
 
+
+
 const CalorieOverview: React.FC = ({ navigation }: any) => {
+  const { user } = useUser();
   const [activities, setActivities] = useState<Activity[]>([]);
-  const basalMetabolicRate = 2000;
+  const basalMetabolicRate = user?.weight
+          ? Math.round(10 * user.weight + 6.25 * (user.height || 0) - 5 * 30 + (user.gender === 'M' ? 5 : -161))
+          : 80085;
   const totalCalories = activities.reduce(
     (sum, activity) => sum - activity.calories,
     -basalMetabolicRate
