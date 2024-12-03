@@ -11,6 +11,7 @@ import "setimmediate";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
+import CreateSportUnit from "./components/CreateSportUnit";
 
 function getDate() {
   const today = new Date();
@@ -85,6 +86,15 @@ export default function App() {
             options={{
               tabBarIcon: () => (
                 <MaterialCommunityIcons name="basketball" size={26} />
+              ),
+            }}
+          />
+          <Tab.Screen
+            name="CreateSportUnit"
+            component={CreateSportUnit}
+            options={{
+              tabBarIcon: () => (
+                <MaterialCommunityIcons name="plus" size={26} />
               ),
             }}
           />
