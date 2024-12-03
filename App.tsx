@@ -13,13 +13,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
 import CreateSportUnit from "./components/CreateSportUnit";
 
-function getDate() {
-  const today = new Date();
-  const month = today.getMonth() + 1;
-  const year = today.getFullYear();
-  const date = today.getDate();
-  return `${month}/${date}/${year}`;
-}
 const Tab = createBottomTabNavigator();
 
 // Delete this if Weight Screen is Created
