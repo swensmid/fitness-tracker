@@ -1,14 +1,15 @@
 import React = require("react");
 import { useState } from "react";
-import { StyleSheet, View } from "react-native";
-import { Text } from "react-native";
-import "setimmediate";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+} from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
-import { TouchableOpacity } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { TitleMiddle } from "../atoms/TitleMiddle";
 import { TitleMajor } from "../atoms/TitleMajor";
-import { ScrollView } from "react-native";
 import { TextInput } from "react-native-paper";
 // TODO: fix import { useUser } from "../context/UserContext";
 
@@ -29,6 +30,15 @@ const theme = {
   },
 };
 
+/**
+ * Calculates the amount of calories burned in a given activity.
+ * @function
+ * @param {string} activity The type of activity.
+ * @param {number} distance The distance of the activity in kilometers.
+ * @param {number} time The duration of the activity in minutes.
+ * @param {number} weightNumber The weight of the user in kilograms.
+ * @return {number} The amount of calories burned.
+ */
 const calculateCalories = (
   activity: string,
   distance: number,
@@ -41,6 +51,13 @@ const calculateCalories = (
   return met * weightNumber * (time / 60);
 };
 
+/**
+ * Calculates MET (Metabolic Equivalent of Task) for a given activity and average speed.
+ * The MET values are based on data from the Compendium of Physical Activities.
+ * @param {string} activity - The activity to calculate MET for. Must be one of "Running", "Walking", "Swimming", "Biking".
+ * @param {number} avgSpeed - The average speed of the activity in kilometers per hour.
+ * @returns {number} The MET value for the given activity and average speed.
+ */
 const getMETForActivity = (activity: any, avgSpeed: number) => {
   switch (activity) {
     case "Running":
@@ -69,12 +86,21 @@ const getMETForActivity = (activity: any, avgSpeed: number) => {
   }
 };
 
+/**
+ * CreateSportUnit component allows users to log new sport activities.
+ * Users can input activity details such as distance, duration, and description.
+ * The component calculates calories burned based on the input and selected activity.
+ * 
+ * @component
+ * @returns {JSX.Element} A view allowing the user to log a new sport activity.
+ */
 export default function CreateSportUnit() {
   // TODO: fix const {user, setCalories} = useUser();
   const [inputError, setInputError] = useState(true);
   // Inputs
   const [distanceValue, setDistanceValue] = useState("");
   const [durationValue, setDurationValue] = useState("");
+  const [descriptionValue, setDescriptionValue] = useState("");
   // Activities
   const [selectedActivity, setSelectedActivity] = useState("");
   const activities = [
@@ -84,6 +110,12 @@ export default function CreateSportUnit() {
     { name: "Biking", icon: "bike" },
   ];
 
+/**
+ * Validates all inputs and saves a new sport unit to the database.
+ * @function
+ * @param {void} None
+ * @return {void} None
+ */
   const handleSave = () => {
     const distanceNumber = parseFloat(distanceValue);
     const durationNumber = parseFloat(durationValue);
@@ -92,16 +124,17 @@ export default function CreateSportUnit() {
     if (
       !isNaN(distanceNumber) &&
       !isNaN(durationNumber) &&
-      selectedActivity !== ""
+      selectedActivity !== "" &&
+      descriptionValue !== ""
     ) {
       setInputError(false);
       const calculatedCalories = calculateCalories(
         selectedActivity,
         distanceNumber,
         durationNumber,
-        // TODO: fix weightNumber 
+        // TODO: fix weightNumber
         // 0 is temporary fix for needing 4 params
-        0|| 0
+        0 || 0
       );
       // TODO: fix setCalories(previousCalories => previousCalories + calculatedCalories);
     } else {
@@ -172,16 +205,28 @@ export default function CreateSportUnit() {
             label="Distance (km)"
             value={distanceValue}
             placeholder="e.g. 10.5"
-            onChangeText={setDistanceValue}
+            onChangeText={(distanceValue) => setDistanceValue(distanceValue)}
+            // TODO: fix error={inputError}
           />
           <TextInput
             style={{ marginBottom: 20 }}
             mode="outlined"
             keyboardType="numeric"
             label="Duration (min)"
-            value={distanceValue}
+            value={durationValue}
             placeholder="e.g. 45"
-            onChangeText={setDurationValue}
+            onChangeText={(durationValue) => setDurationValue(durationValue)}
+            // TODO: fix error={inputError}
+          />
+          <TextInput
+            style={{ marginBottom: 20 }}
+            mode="outlined"
+            keyboardType="default"
+            label="Description"
+            value={descriptionValue}
+            placeholder="e.g. Morning run with John"
+            onChangeText={(descriptionValue) => setDescriptionValue(descriptionValue)}
+            // TODO: fix error={inputError}
           />
           <TouchableOpacity
             onPress={handleSave}
@@ -208,12 +253,3 @@ export default function CreateSportUnit() {
     </PaperProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
