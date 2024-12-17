@@ -1,8 +1,9 @@
+import React = require("react");
+import { useState } from "react";
 import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { setupDatabase } from "./components/Database/SQLite";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
 import * as Font from "expo-font";
 import { Text } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";

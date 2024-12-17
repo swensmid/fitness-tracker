@@ -1,4 +1,4 @@
-import React from "react";
+import React = require("react");
 import { View } from "react-native";
 import { TitleMajor } from "../atoms/TitleMajor";
 import { TitleMiddle } from "../atoms/TitleMiddle";

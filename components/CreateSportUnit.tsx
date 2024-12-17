@@ -1,7 +1,8 @@
+import React = require("react");
+import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "react-native";
 import "setimmediate";
-import React, { useState } from "react";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import { TouchableOpacity } from "react-native";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
@@ -9,7 +10,7 @@ import { TitleMiddle } from "../atoms/TitleMiddle";
 import { TitleMajor } from "../atoms/TitleMajor";
 import { ScrollView } from "react-native";
 import { InputField } from "../atoms/InputField";
-import { KeyboardAvoidingView } from 'react-native';
+import { TextInput } from "react-native-paper";
 
 function getDate() {
   const today = new Date();
@@ -30,7 +31,6 @@ const theme = {
 
 export default function CreateSportUnit() {
   // Inputs
-  const [activityValue, setActivityValue] = useState("");
   const [distanceValue, setDistanceValue] = useState("");
   const [durationValue, setDurationValue] = useState("");
   const [inputError, setInputError] = useState(true);
@@ -51,7 +51,7 @@ export default function CreateSportUnit() {
     if (
       !isNaN(distanceNumber) &&
       !isNaN(durationNumber) &&
-      activityValue !== ""
+      selectedActivity !== ""
     ) {
       setInputError(false);
     } else {
@@ -61,10 +61,11 @@ export default function CreateSportUnit() {
 
   return (
     <PaperProvider theme={theme}>
-      <View
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
         style={{
+          flex: 1,
           flexDirection: "column",
-          justifyContent: "center",
           margin: 20,
         }}
       >
@@ -106,54 +107,54 @@ export default function CreateSportUnit() {
             </TouchableOpacity>
           ))}
         </View>
-
-        {/* TODO: Maybe make scrollable view or keyboard avoiding view */}
-        {selectedActivity !== "" && (
-          <View
+        <View
+          style={{
+            flexDirection: "column",
+            justifyContent: "center",
+            width: "100%",
+            padding: 20,
+          }}
+        >
+          <TextInput
+            style={{ marginBottom: 20 }}
+            mode="outlined"
+            keyboardType="numeric"
+            label="Distance (km)"
+            value={distanceValue}
+            placeholder="e.g. 10.5"
+            onChange={(e) => setDistanceValue(e.nativeEvent.text)}
+          />
+          <TextInput
+            style={{ marginBottom: 20 }}
+            mode="outlined"
+            keyboardType="numeric"
+            label="Duration (min)"
+            value={distanceValue}
+            placeholder="e.g. 45"
+            onChange={(e) => setDurationValue(e.nativeEvent.text)}
+          />
+          <TouchableOpacity
+            onPress={handleSave}
             style={{
-              flexDirection: "column",
-              justifyContent: "center",
+              backgroundColor: "#1A5A41",
+              padding: 10,
+              borderRadius: 10,
               width: "100%",
-              padding: 20,
+              marginTop: 20,
             }}
           >
-            <InputField
-              label="Distance (km)"
-              placeholder="e.g. 10.5"
-              value={distanceValue}
-              onChangeText={(text) => setDistanceValue(text)}
-              //error={inputError}
-            />
-            <InputField
-              label="Duration (min)"
-              placeholder="e.g. 45"
-              value={durationValue}
-              onChangeText={(text) => setDurationValue(text)}
-              //error={inputError}
-            />
-            <TouchableOpacity
-              onPress={handleSave}
+            <Text
               style={{
-                backgroundColor: "#1A5A41",
-                padding: 10,
-                borderRadius: 10,
-                width: "100%",
-                marginTop: 20,
+                color: "#fff",
+                textAlign: "center",
+                fontSize: 16,
               }}
             >
-              <Text
-                style={{
-                  color: "#fff",
-                  textAlign: "center",
-                  fontSize: 16,
-                }}
-              >
-                Save
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
+              Save
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </PaperProvider>
   );
 }
