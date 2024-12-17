@@ -1,17 +1,13 @@
-import * as SQLite from 'expo-sqlite';
-import 'setimmediate';
-
+import * as SQLite from "expo-sqlite";
+import "setimmediate";
 
 let db: any;
 
-
-
-
 export const setupDatabase = async () => {
-    db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+  db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
 
-    try {
-        await db.execAsync(`
+  try {
+    await db.execAsync(`
         PRAGMA journal_mode = WAL;
         CREATE TABLE IF NOT EXISTS User (
     ID INT PRIMARY KEY,
@@ -53,11 +49,11 @@ CREATE TABLE IF NOT EXISTS ConsumedFood (
     FOREIGN KEY (UserId) REFERENCES User(ID)
 );
 
-       `)
-        console.log(db)
-    } catch (error) {
-        console.error("Error setting up database:", error);
-    }
-}
+       `);
+    console.log(db);
+  } catch (error) {
+    console.error("Error setting up database:", error);
+  }
+};
 
 export default setupDatabase;
