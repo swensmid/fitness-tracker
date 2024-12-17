@@ -9,8 +9,8 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import { TitleMiddle } from "../atoms/TitleMiddle";
 import { TitleMajor } from "../atoms/TitleMajor";
 import { ScrollView } from "react-native";
-import { InputField } from "../atoms/InputField";
 import { TextInput } from "react-native-paper";
+// TODO: fix import { useUser } from "../context/UserContext";
 
 function getDate() {
   const today = new Date();
@@ -29,17 +29,57 @@ const theme = {
   },
 };
 
+const calculateCalories = (
+  activity: string,
+  distance: number,
+  time: number,
+  weightNumber: number
+) => {
+  const avgSpeed = distance / (time / 60);
+  const met = getMETForActivity(activity, avgSpeed);
+
+  return met * weightNumber * (time / 60);
+};
+
+const getMETForActivity = (activity: any, avgSpeed: number) => {
+  switch (activity) {
+    case "Running":
+      if (12 <= avgSpeed) return 11.5;
+      if (10 <= avgSpeed) return 10;
+      if (8 <= avgSpeed) return 8.3;
+      if (6.5 <= avgSpeed) return 5;
+      if (5 <= avgSpeed) return 3.8;
+      return 0;
+    case "Walking":
+      if (6.5 <= avgSpeed) return 5;
+      if (5 <= avgSpeed) return 3.8;
+      if (3 <= avgSpeed) return 2.3;
+      return 0;
+    case "Swimming":
+      if (5 <= avgSpeed) return 8;
+      if (0 < avgSpeed) return 6;
+      return 0;
+    case "Biking":
+      if (22 <= avgSpeed) return 10;
+      if (19 <= avgSpeed) return 8;
+      if (16 <= avgSpeed) return 6;
+      return 0;
+    default:
+      return 0;
+  }
+};
+
 export default function CreateSportUnit() {
+  // TODO: fix const {user, setCalories} = useUser();
+  const [inputError, setInputError] = useState(true);
   // Inputs
   const [distanceValue, setDistanceValue] = useState("");
   const [durationValue, setDurationValue] = useState("");
-  const [inputError, setInputError] = useState(true);
-
   // Activities
   const [selectedActivity, setSelectedActivity] = useState("");
   const activities = [
-    { name: "Walking", icon: "walk" },
     { name: "Running", icon: "run" },
+    { name: "Walking", icon: "walk" },
     { name: "Swimming", icon: "swim" },
     { name: "Biking", icon: "bike" },
   ];
@@ -47,6 +87,7 @@ export default function CreateSportUnit() {
   const handleSave = () => {
     const distanceNumber = parseFloat(distanceValue);
     const durationNumber = parseFloat(durationValue);
+    // TODO: fix const weightNumber = user.weight;
 
     if (
       !isNaN(distanceNumber) &&
@@ -54,6 +95,15 @@ export default function CreateSportUnit() {
       selectedActivity !== ""
     ) {
       setInputError(false);
+      const calculatedCalories = calculateCalories(
+        selectedActivity,
+        distanceNumber,
+        durationNumber,
+        // TODO: fix weightNumber 
+        // 0 is temporary fix for needing 4 params
+        0|| 0
+      );
+      // TODO: fix setCalories(previousCalories => previousCalories + calculatedCalories);
     } else {
       setInputError(true);
     }
@@ -122,7 +172,7 @@ export default function CreateSportUnit() {
             label="Distance (km)"
             value={distanceValue}
             placeholder="e.g. 10.5"
-            onChange={(e) => setDistanceValue(e.nativeEvent.text)}
+            onChangeText={setDistanceValue}
           />
           <TextInput
             style={{ marginBottom: 20 }}
@@ -131,7 +181,7 @@ export default function CreateSportUnit() {
             label="Duration (min)"
             value={distanceValue}
             placeholder="e.g. 45"
-            onChange={(e) => setDurationValue(e.nativeEvent.text)}
+            onChangeText={setDurationValue}
           />
           <TouchableOpacity
             onPress={handleSave}
