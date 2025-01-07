@@ -1,0 +1,42 @@
+# This workflow will do a formatting check based on the prettier formatting plugin
+
+name: Prettier Check
+
+on:
+  push:
+    branches:
+      - '**' # all branches
+  pull_request:
+    branches: 
+      - '**' # same as above
+
+jobs:
+  prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Prettier check
+        run: npm run check-format
+
+      - name: Annotate Pull Request with Results
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Prettier found formatting issues. Please run `npm run format` to fix them.'
+            })
