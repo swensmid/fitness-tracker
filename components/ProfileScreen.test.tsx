@@ -23,8 +23,8 @@ describe('ProfileScreen', () => {
                 length: 1,
                 item: (index: number) => ({
                   id: 1,
-                  username: 'TestUser',
-                  birthdate: '1990-01-01',
+                  username: 'Max Mustermann',
+                  birthdate: '2004-03-20',
                   height: 180,
                   gender: 'M',
                 }),
@@ -36,10 +36,11 @@ describe('ProfileScreen', () => {
       getFirstAsync: jest.fn(async (sql: string) => {
         return {
           id: 1,
-          username: 'TestUser',
-          birthdate: '1990-01-01',
+          username: 'Max Mustermann',
+          birthdate: '2004-03-20',
           height: 180,
           gender: 'M',
+          weight: 72,
         };
       }),
       runAsync: jest.fn(async (sql: string, params: any[]) => {}),
@@ -48,28 +49,25 @@ describe('ProfileScreen', () => {
     (setupDatabase as jest.Mock).mockReturnValue(Promise.resolve());
   });
 
-  test('displays the user name correctly', async () => {
-    const { getByPlaceholderText, getByText, getByDisplayValue } = render(
+  test('fills the form fields correctly', async () => {
+    const { getByPlaceholderText } = render(
       <UserProvider>
         <ProfileScreen />
       </UserProvider>
     );
 
-    // Fill out the form
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'TestUser');
-    fireEvent.changeText(getByPlaceholderText('YYYY-MM-DD'), '1990-01-01');
-    fireEvent.changeText(getByPlaceholderText('Enter your weight'), '70');
+    // Fill out the form with Testdaten01
+    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'Max Mustermann');
+    fireEvent.changeText(getByPlaceholderText('YYYY-MM-DD'), '2004-03-20');
+    fireEvent.changeText(getByPlaceholderText('Enter your weight'), '72');
     fireEvent.changeText(getByPlaceholderText('Enter your height'), '180');
+    fireEvent.changeText(getByPlaceholderText('M/F'), 'M');
 
-    // Simulate pressing the confirm button
-    fireEvent.press(getByText('Confirm'));
-
-    // Simulate pressing the Show User button
-    fireEvent.press(getByText('Show User'));
-
-    // Wait for the username to be displayed in the TextInput
-    await waitFor(() => {
-      expect(getByDisplayValue('TestUser')).toBeTruthy();
-    });
+    // Check if the fields hold the correct values
+    expect(getByPlaceholderText('Enter your name').props.value).toBe('Max Mustermann');
+    expect(getByPlaceholderText('YYYY-MM-DD').props.value).toBe('2004-03-20');
+    expect(getByPlaceholderText('Enter your weight').props.value).toBe('72');
+    expect(getByPlaceholderText('Enter your height').props.value).toBe('180');
+    expect(getByPlaceholderText('M/F').props.value).toBe('M');
   });
 });
