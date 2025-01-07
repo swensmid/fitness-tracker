@@ -3,114 +3,120 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import { setupDatabase } from "./components/Database/SQLite";
 import * as Font from "expo-font";
-import { Text} from "react-native";
+import { Text } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
-import 'setimmediate';
+import "setimmediate";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
+import ProfileScreen from "./components/ProfileScreen";
+import { UserProvider } from "./components/UserContext";
 const Tab = createBottomTabNavigator();
 
 // Delete this if Weight Screen is Created
 const WeightScreen = () => (
-  <View>
-    <Text>Sports Unit Screen</Text>
-  </View>
+    <View>
+        <Text>Sports Unit Screen</Text>
+    </View>
 );
 
 // Delete this if Foods is Created
 const FoodsScreen = () => (
-  <View>
-    <Text>Calendar Screen</Text>
-  </View>
+    <View>
+        <Text>Calendar Screen</Text>
+    </View>
 );
-
-// Delete this if Profile Screen is Created
-const ProfileScreen = () => (
-  <View>
-    <Text>Profile Screen</Text>
-  </View>
-);
-
 
 const theme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: "#1A5A41",
-    secondary: "#EAE7E7",
-  },
+    ...DefaultTheme,
+    colors: {
+        ...DefaultTheme.colors,
+        primary: "#1A5A41",
+        secondary: "#EAE7E7",
+    },
 };
 
 export default function App() {
-  useEffect(() => {
+    useEffect(() => {
+        const initializeDatabase = async () => {
+            try {
+                await setupDatabase();
+            } catch (error) {
+                console.error("Failed:", error);
+            }
+        };
+        initializeDatabase();
+    }, []);
 
-    const initializeDatabase = async () => {
-      try {
+    const [loaded] = Font.useFonts({
+        Montserrat: require("./assets/fonts/MontserratBlack.ttf"),
+    });
 
-        await setupDatabase();
-      } catch (error) {
-        console.error('Failed:', error)
-      }
-    };
-    initializeDatabase();
-  }, []);
+    if (!loaded) {
+        return null;
+    }
 
-  const [loaded] = Font.useFonts({
-    Montserrat: require("./assets/fonts/MontserratBlack.ttf"),
-  });
-
-  if (!loaded) {
-    return null;
-  }
-
-  return (
-    <PaperProvider theme={theme}>
-      <NavigationContainer>
-        <Tab.Navigator
-          screenOptions={{
-            tabBarShowLabel: false,
-          }}
-        >
-          <Tab.Screen
-            name="Home"
-            component={HomeScreen}
-            options={{
-              tabBarIcon: () => (
-                <MaterialCommunityIcons name="basketball" size={26} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Weight"
-            component={WeightScreen}
-            options={{
-              tabBarIcon: () => (
-                <MaterialCommunityIcons name="chart-line-variant" size={26} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Foods"
-            component={FoodsScreen}
-            options={{
-              tabBarIcon: () => (
-                <MaterialCommunityIcons name="food" size={26} />
-              ),
-            }}
-          />
-          <Tab.Screen
-            name="Profil"
-            component={ProfileScreen}
-            options={{
-              tabBarIcon: () => (
-                <MaterialCommunityIcons name="account" size={26} />
-              ),
-            }}
-          />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </PaperProvider>
-  );
+    return (
+        <PaperProvider theme={theme}>
+            <UserProvider>
+                <NavigationContainer>
+                    <Tab.Navigator
+                        screenOptions={{
+                            tabBarShowLabel: false,
+                        }}
+                    >
+                        <Tab.Screen
+                            name="Home"
+                            component={HomeScreen}
+                            options={{
+                                tabBarIcon: () => (
+                                    <MaterialCommunityIcons
+                                        name="basketball"
+                                        size={26}
+                                    />
+                                ),
+                            }}
+                        />
+                        <Tab.Screen
+                            name="Weight"
+                            component={WeightScreen}
+                            options={{
+                                tabBarIcon: () => (
+                                    <MaterialCommunityIcons
+                                        name="chart-line-variant"
+                                        size={26}
+                                    />
+                                ),
+                            }}
+                        />
+                        <Tab.Screen
+                            name="Foods"
+                            component={FoodsScreen}
+                            options={{
+                                tabBarIcon: () => (
+                                    <MaterialCommunityIcons
+                                        name="food"
+                                        size={26}
+                                    />
+                                ),
+                            }}
+                        />
+                        <Tab.Screen
+                            name="Profil"
+                            component={ProfileScreen}
+                            options={{
+                                tabBarIcon: () => (
+                                    <MaterialCommunityIcons
+                                        name="account"
+                                        size={26}
+                                    />
+                                ),
+                            }}
+                        />
+                    </Tab.Navigator>
+                </NavigationContainer>
+            </UserProvider>
+        </PaperProvider>
+    );
 }

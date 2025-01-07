@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
-import { UserProvider, useUser } from './UserContext'
-import * as SQLite from 'expo-sqlite';
-
+import React, { useState, useEffect } from "react";
+import {
+    View,
+    TextInput,
+    Text,
+    Button,
+    StyleSheet,
+    TouchableOpacity,
+} from "react-native";
+import { UserProvider, useUser } from "./UserContext";
+import * as SQLite from "expo-sqlite";
 
 const ProfileScreen = () => {
     const { user, saveUser } = useUser();
@@ -12,18 +18,28 @@ const ProfileScreen = () => {
     const [weight, setWeight] = useState(user?.weight?.toString() || "");
     const [height, setHeight] = useState(user?.height?.toString() || "");
     const [birthdate, setBirthdate] = useState(user?.birthdate || "");
-//TODO: richtige werte einsetzen
+    //TODO: richtige werte einsetzen
     const calculateCalorieBaseRate = () => {
         const parsedWeight = parseFloat(weight || "0");
         const parsedHeight = parseFloat(height || "0");
-        const age = birthdate ? new Date().getFullYear() - new Date(birthdate).getFullYear() : 0;
+        const age = birthdate
+            ? new Date().getFullYear() - new Date(birthdate).getFullYear()
+            : 0;
 
         if (!parsedWeight || !parsedHeight || !age) return "0 Cals";
 
         if (gender === "M") {
-            return Math.round(10 * parsedWeight + 6.25 * parsedHeight - 5 * age + 5) + " Cals";
+            return (
+                Math.round(
+                    10 * parsedWeight + 6.25 * parsedHeight - 5 * age + 5,
+                ) + " Cals"
+            );
         } else {
-            return Math.round(10 * parsedWeight + 6.25 * parsedHeight - 5 * age - 161) + " Cals";
+            return (
+                Math.round(
+                    10 * parsedWeight + 6.25 * parsedHeight - 5 * age - 161,
+                ) + " Cals"
+            );
         }
     };
 
@@ -34,33 +50,30 @@ const ProfileScreen = () => {
         }
 
         saveUser({
-            username:username,
+            username: username,
             birthdate: birthdate,
             height: parseFloat(height),
             gender,
             weight: parseFloat(weight),
         });
-
-
     };
 
-
     const handleShowUserData = async () => {
-        const db = await SQLite.openDatabaseAsync('DatabaseFitnessTracker');
-        if(db){
+        const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+        if (db) {
             await db.withTransactionAsync(async () => {
-              const result = await db.getFirstAsync(`SELECT
+                const result = await db.getFirstAsync(`SELECT
                                                                         ID AS id,
                                                                         Username AS username,
                                                                         Birthdate AS birthdate,
                                                                         Height_cm AS height,
                                                                         Gender AS gender
                                                                      FROM User WHERE ID = 1`);
-              console.log(result);
+                console.log(result);
             });
-        }else{
-            console.log("womp")
-            }
+        } else {
+            console.log("womp");
+        }
     };
 
     return (
@@ -120,12 +133,18 @@ const ProfileScreen = () => {
             <Text style={styles.calorie}>{calculateCalorieBaseRate()}</Text>
 
             {/* Confirm Button */}
-            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+            <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+            >
                 <Text style={styles.confirmText}>Confirm</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.confirmButton} onPress={handleShowUserData}>
-                            <Text style={styles.confirmText}>Show User</Text>
-                        </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleShowUserData}
+            >
+                <Text style={styles.confirmText}>Show User</Text>
+            </TouchableOpacity>
         </View>
     );
 };
@@ -134,44 +153,44 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: "#f5f5f5",
     },
     title: {
         fontSize: 30,
-        fontWeight: 'bold',
+        fontWeight: "bold",
         marginBottom: 20,
-        color: '#000',
+        color: "#000",
     },
     label: {
         fontSize: 18,
         marginTop: 10,
-        color: '#333',
+        color: "#333",
     },
     input: {
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: "#ccc",
         borderRadius: 8,
         padding: 10,
         fontSize: 16,
-        backgroundColor: '#fff',
+        backgroundColor: "#fff",
     },
     calorie: {
         fontSize: 18,
         marginTop: 10,
-        fontWeight: 'bold',
-        color: '#333',
+        fontWeight: "bold",
+        color: "#333",
     },
     confirmButton: {
-        backgroundColor: 'green',
+        backgroundColor: "green",
         padding: 15,
         borderRadius: 8,
         marginTop: 20,
-        alignItems: 'center',
+        alignItems: "center",
     },
     confirmText: {
-        color: '#fff',
+        color: "#fff",
         fontSize: 18,
-        fontWeight: 'bold',
+        fontWeight: "bold",
     },
 });
 
