@@ -43,9 +43,7 @@ const theme = {
 };
 
 export default function App() {
-  useEffect(() => {
-
-  }, []);
+  useEffect(() => {}, []);
 
   const [loaded] = Font.useFonts({
     Montserrat: require("./assets/fonts/MontserratBlack.ttf"),
