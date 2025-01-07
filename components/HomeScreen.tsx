@@ -17,6 +17,7 @@ type Activity = {
 };
 
 const CalorieOverview: React.FC = ({ navigation }: any) => {
+
     const { user } = useUser();
     const [activities, setActivities] = useState<Activity[]>([]);
     const basalMetabolicRate = user?.weight
@@ -72,6 +73,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             </View>
         </View>
     );
+
 
     return (
         <View style={styles.container}>

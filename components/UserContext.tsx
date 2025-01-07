@@ -7,7 +7,7 @@ const UserContext = createContext();
 export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null);
 
     useEffect(() => {
         const initializeDatabase = async () => {
@@ -73,15 +73,15 @@ export const UserProvider = ({ children }) => {
                 );
                 console.log("User saved successfully!");
 
-                await db.runAsync(
-                    `INSERT INTO Weight (UserID, Weight, Date)
+        await db.runAsync(
+          `INSERT INTO Weight (UserID, Weight, Date)
                      VALUES (1, ?, datetime('now'))`,
                     [newUser.weight],
                 );
                 console.log("Weight saved successfully!");
 
-                const resultWeight = await db.getFirstAsync(
-                    `SELECT Weight AS weight FROM Weight
+        const resultWeight = await db.getFirstAsync(
+          `SELECT Weight AS weight FROM Weight
                      WHERE UserID = 1
                      ORDER BY Date DESC
                      LIMIT 1`,

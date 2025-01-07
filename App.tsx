@@ -43,6 +43,7 @@ const theme = {
 };
 
 export default function App() {
+
     useEffect(() => {}, []);
 
     const [loaded] = Font.useFonts({
