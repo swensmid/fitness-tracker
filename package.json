@@ -9,8 +9,9 @@
     "web": "expo start --web"
   },
   "dependencies": {
-    "@react-navigation/bottom-tabs": "^6.6.1",
+    "@react-navigation/bottom-tabs": "^7.1.3",
     "@react-navigation/native": "^6.1.18",
+    "@expo/metro-runtime": "~3.2.3",
     "eslint": "^9.15.0",
     "expo": "~51.0.28",
     "expo-drizzle-studio-plugin": "^0.1.1",
