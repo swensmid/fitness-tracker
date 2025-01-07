@@ -96,7 +96,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             )}
             <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => navigation.navigate("AddActivity")}
+                onPress={() => navigation.navigate("CreateSportUnit")}
             >
                 <Text style={styles.addButtonText}>ADD NEW ACTIVITY</Text>
             </TouchableOpacity>

@@ -12,6 +12,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import { UserProvider } from "./components/UserContext";
+import CreateSportUnit from "./components/CreateSportUnit";
 const Tab = createBottomTabNavigator();
 
 // Delete this if Weight Screen is Created
@@ -73,6 +74,18 @@ export default function App() {
                                 tabBarIcon: () => (
                                     <MaterialCommunityIcons
                                         name="basketball"
+                                        size={26}
+                                    />
+                                ),
+                            }}
+                        />
+                        <Tab.Screen
+                            name="CreateSportUnit"
+                            component={CreateSportUnit}
+                            options={{
+                                tabBarIcon: () => (
+                                    <MaterialCommunityIcons
+                                        name="plus"
                                         size={26}
                                     />
                                 ),
