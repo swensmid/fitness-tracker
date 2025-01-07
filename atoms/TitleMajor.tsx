@@ -1,5 +1,5 @@
+import React = require('react');
 import { Text, StyleSheet } from "react-native";
-import React from "react";
 
 export const TitleMajor = ({ text }: { text: string }) => {
   return <Text style={styles.TitleMajor}>{text}</Text>;
