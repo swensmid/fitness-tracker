@@ -50,10 +50,11 @@ CREATE TABLE IF NOT EXISTS ConsumedFood (
 );
 
        `);
-    console.log(db);
-  } catch (error) {
-    console.error("Error setting up database:", error);
-  }
+        console.log(db);
+    } catch (error) {
+        console.error("Error setting up database:", error);
+    }
+
 };
 
 export default setupDatabase;
