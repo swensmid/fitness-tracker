@@ -139,12 +139,6 @@ const ProfileScreen = () => {
             >
                 <Text style={styles.confirmText}>Confirm</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleShowUserData}
-            >
-                <Text style={styles.confirmText}>Show User</Text>
-            </TouchableOpacity>
         </View>
     );
 };
