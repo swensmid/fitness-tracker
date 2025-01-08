@@ -1,6 +1,6 @@
 // ProfileScreen.test.tsx
 import React from 'react';
-import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 import ProfileScreen from './ProfileScreen';
 import { UserProvider } from './UserContext';
 import * as SQLite from 'expo-sqlite';
@@ -56,12 +56,14 @@ describe('ProfileScreen', () => {
       </UserProvider>
     );
 
-    // Fill out the form with Testdaten01
-    fireEvent.changeText(getByPlaceholderText('Enter your name'), 'Max Mustermann');
-    fireEvent.changeText(getByPlaceholderText('YYYY-MM-DD'), '2004-03-20');
-    fireEvent.changeText(getByPlaceholderText('Enter your weight'), '72');
-    fireEvent.changeText(getByPlaceholderText('Enter your height'), '180');
-    fireEvent.changeText(getByPlaceholderText('M/F'), 'M');
+    await act(async () => {
+      // Fill out the form with Testdaten01
+      fireEvent.changeText(getByPlaceholderText('Enter your name'), 'Max Mustermann');
+      fireEvent.changeText(getByPlaceholderText('YYYY-MM-DD'), '2004-03-20');
+      fireEvent.changeText(getByPlaceholderText('Enter your weight'), '72');
+      fireEvent.changeText(getByPlaceholderText('Enter your height'), '180');
+      fireEvent.changeText(getByPlaceholderText('M/F'), 'M');
+    });
 
     // Check if the fields hold the correct values
     expect(getByPlaceholderText('Enter your name').props.value).toBe('Max Mustermann');
