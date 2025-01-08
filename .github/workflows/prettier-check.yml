@@ -28,16 +28,3 @@ jobs:
 
             - name: Run Prettier check
               run: npm run check-format
-
-            - name: Annotate Pull Request with Results
-              if: failure()
-              uses: actions/github-script@v6
-              with:
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
-                  script: |
-                      github.rest.issues.createComment({
-                        issue_number: context.issue.number,
-                        owner: context.repo.owner,
-                        repo: context.repo.repo,
-                        body: '⚠️ Prettier found formatting issues. Please run `npm run format` to fix them.'
-                      })
