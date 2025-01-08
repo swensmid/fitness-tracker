@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "format": "prettier --write .",
     "check-format": "prettier --check .",
-    "test": "jest --watchAll"
+    "test": "jest"
   },
   "dependencies": {
     "@react-navigation/bottom-tabs": "^6.6.1",
