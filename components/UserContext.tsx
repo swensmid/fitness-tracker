@@ -6,8 +6,9 @@ const UserContext = createContext();
 
 export const useUser = () => useContext(UserContext);
 
-export const UserProvider = ({ children }) => {
+export const UserProvider = ({ children }: any) => {
     const [user, setUser] = useState(null);
+    const [calories, setCalories] = useState(0);
 
     useEffect(() => {
         const initializeDatabase = async () => {
@@ -109,8 +110,39 @@ export const UserProvider = ({ children }) => {
         }
     };
 
+    const getDailyCalories = async () => {
+        try {
+            const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+            const today = new Date().toISOString().split("T")[0];
+
+            const checkForActivityToday = await db.getFirstAsync(`
+                SELECT EXISTS (SELECT * FROM Activity WHERE Date = '${today}');
+            `);
+
+            if (!checkForActivityToday) {
+                console.log("No activity for today");
+                return null;
+            } else {
+                const dailyCalories = (await db.getFirstAsync(`
+                SELECT SUM(Calories) AS totalCalories
+                FROM Activity
+                WHERE UserId = 1 AND Date = '${today}'
+            `)) as { totalCalories: number };
+
+                const totalCalories = dailyCalories.totalCalories;
+                console.log("Todays total calories:", totalCalories);
+                setCalories(totalCalories);
+                return totalCalories;
+            }
+        } catch (error) {
+            console.error("Error in getDailyCalories:", error);
+        }
+    };
+
     return (
-        <UserContext.Provider value={{ user, saveUser }}>
+        <UserContext.Provider
+            value={{ user, saveUser, calories, setCalories, getDailyCalories }}
+        >
             {children}
         </UserContext.Provider>
     );
