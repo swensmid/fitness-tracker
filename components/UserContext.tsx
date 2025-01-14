@@ -126,7 +126,7 @@ export const UserProvider = ({ children }: any) => {
                 const dailyCalories = (await db.getFirstAsync(`
                 SELECT SUM(Calories) AS totalCalories
                 FROM Activity
-                WHERE UserId = 1 AND Date = '${today}'
+                WHERE Date = '${today}'
             `)) as { totalCalories: number };
 
                 const totalCalories = dailyCalories.totalCalories;

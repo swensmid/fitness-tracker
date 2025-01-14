@@ -65,7 +65,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
 
         const fetchCalories = async () => {
             try {
-                const dailyCalories = await getDailyCalories(user.id);
+                const dailyCalories = await getDailyCalories();
                 if (
                     dailyCalories === null ||
                     dailyCalories === undefined ||
@@ -83,7 +83,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
                     setTotalCalories(total);
                 }
             } catch (error) {
-                console.error("Error in fetchData:", error);
+                console.error("Error in fetchCalories:", error);
             }
         };
         fetchActivities();
