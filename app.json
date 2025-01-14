@@ -18,10 +18,17 @@
             "adaptiveIcon": {
                 "foregroundImage": "./assets/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
-            }
+            },
+            "package": "com.expo.FT"
         },
         "web": {
             "favicon": "./assets/favicon.png"
-        }
+        },
+        "extra": {
+            "eas": {
+                "projectId": "${EAS_PROJECT_ID}"
+            }
+        },
+        "owner": "${OWNER}"
     }
 }
