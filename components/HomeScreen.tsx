@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { UserProvider, useUser } from "./UserContext";
+import React, { useEffect, useState } from "react";
+import { useUser } from "./UserContext";
 import {
     View,
     Text,
@@ -9,15 +9,28 @@ import {
     Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { deleteActivity, getTodaysActivities } from "./Database/Scripts";
 
 type Activity = {
-    id: number;
-    name: string;
-    calories: number;
+    UserId: number;
+    Id: number;
+    Name: string;
+    Description: string;
+    Calories: number;
+    Date: string;
 };
 
+/**
+ * The CalorieOverview component displays the total calories burned for the day,
+ * including the basal metabolic rate. It also displays a list of activities
+ * for the day, with options to delete or edit each activity.
+ *
+ * @param {Object} props - The props object passed from the parent component.
+ * @param {Function} props.navigation - The navigation function passed from the parent component.
+ * @returns {JSX.Element} The CalorieOverview component.
+ */
 const CalorieOverview: React.FC = ({ navigation }: any) => {
-    const { user } = useUser();
+    const { user, calories, setCalories, getDailyCalories } = useUser();
     const [activities, setActivities] = useState<Activity[]>([]);
     const basalMetabolicRate = user?.weight
         ? Math.round(
@@ -27,12 +40,57 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
                   (user.gender === "M" ? 5 : -161),
           )
         : 80085;
-    const totalCalories = activities.reduce(
-        (sum, activity) => sum - activity.calories,
-        -basalMetabolicRate,
+
+    const [totalCalories, setTotalCalories] = useState<string | "0" | null>(
+        "-" + basalMetabolicRate.toString(),
     );
 
-    const handleDelete = (id: number) => {
+    useEffect(() => {
+        const fetchActivities = async () => {
+            try {
+                const activities = await getTodaysActivities();
+
+                if (
+                    activities === null ||
+                    activities === undefined ||
+                    !activities
+                ) {
+                    setActivities([]);
+                }
+                setActivities(activities as Activity[]);
+            } catch (error) {
+                console.error("Error in fetchActivities:", error);
+            }
+        };
+
+        const fetchCalories = async () => {
+            try {
+                const dailyCalories = await getDailyCalories();
+                if (
+                    dailyCalories === null ||
+                    dailyCalories === undefined ||
+                    isNaN(dailyCalories) ||
+                    dailyCalories < 0
+                ) {
+                    // TODO: DO NOT CAST TO STRING
+                    setTotalCalories("-" + basalMetabolicRate.toString());
+                    return {
+                        totalCalories: "-" + basalMetabolicRate.toString(),
+                    };
+                } else {
+                    setCalories(dailyCalories);
+                    const total = (-calories - basalMetabolicRate).toFixed(0);
+                    setTotalCalories(total);
+                }
+            } catch (error) {
+                console.error("Error in fetchCalories:", error);
+            }
+        };
+        fetchActivities();
+        fetchCalories();
+    }, [calories, totalCalories, calories, basalMetabolicRate]);
+
+    const handleDeleteActivity = (id: number) => {
         Alert.alert(
             "Delete Activity",
             "Are you sure you want to delete this activity?",
@@ -44,9 +102,15 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
                 {
                     text: "Delete",
                     onPress: () =>
-                        setActivities(
-                            activities.filter((activity) => activity.id !== id),
-                        ),
+                        deleteActivity(id)
+                            .then(getDailyCalories)
+                            .then(() =>
+                                setActivities(
+                                    activities.filter(
+                                        (activity) => activity.Id !== id,
+                                    ),
+                                ),
+                            ),
                     style: "destructive",
                 },
             ],
@@ -56,17 +120,17 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
     const renderActivity = ({ item }: { item: Activity }) => (
         <View style={styles.activityItem}>
             <Text style={styles.activityText}>
-                {item.name}: -{item.calories} Calories
+                {item.Name}: -{item.Calories.toFixed(0)} Calories
             </Text>
             <View style={styles.icons}>
                 <TouchableOpacity
                     onPress={() =>
-                        navigation.navigate("EditActivity", { activity: item })
+                        navigation.navigate("EditSportUnit", { activity: item })
                     }
                 >
                     <Ionicons name="create-outline" size={24} color="blue" />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDelete(item.id)}>
+                <TouchableOpacity onPress={() => handleDeleteActivity(item.Id)}>
                     <Ionicons name="trash-outline" size={24} color="red" />
                 </TouchableOpacity>
             </View>
@@ -79,7 +143,11 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             <Text style={styles.subtitle}>Activity</Text>
             <View style={styles.calorieCircle}>
                 <View style={styles.innerCircle}>
-                    <Text style={styles.calorieText}>{totalCalories}</Text>
+                    <Text style={styles.calorieText}>
+                        {totalCalories === null
+                            ? basalMetabolicRate
+                            : totalCalories}
+                    </Text>
                     <Text style={styles.calorieSubText}>Calories</Text>
                 </View>
             </View>
@@ -90,7 +158,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             ) : (
                 <FlatList
                     data={activities}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item.Id.toString()}
                     renderItem={renderActivity}
                 />
             )}

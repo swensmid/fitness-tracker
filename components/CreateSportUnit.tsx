@@ -1,12 +1,18 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+} from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { TitleMiddle } from "../atoms/TitleMiddle";
 import { TitleMajor } from "../atoms/TitleMajor";
-import { TextInput } from "react-native-paper";
-// TODO: fix import { useUser } from "../context/UserContext";
+import { TextInput, Button } from "react-native-paper";
+import { useUser } from "./UserContext";
+import { saveActivity } from "./Database/Scripts";
 
 function getDate() {
     const today = new Date();
@@ -15,6 +21,8 @@ function getDate() {
     const date = today.getDate();
     return `${date}, ${month} ${year}`;
 }
+
+const today = new Date().toISOString().split("T")[0];
 
 const theme = {
     ...DefaultTheme,
@@ -29,21 +37,21 @@ const theme = {
  * Calculates the amount of calories burned in a given activity.
  * @function
  * @param {string} activity The type of activity.
- * @param {number} distance The distance of the activity in kilometers.
- * @param {number} time The duration of the activity in minutes.
+ * @param {number} distanceNumber The distance of the activity in kilometers.
+ * @param {number} durationNumber The duration of the activity in minutes.
  * @param {number} weightNumber The weight of the user in kilograms.
  * @return {number} The amount of calories burned.
  */
 const calculateCalories = (
     activity: string,
-    distance: number,
-    time: number,
+    distanceNumber: number,
+    durationNumber: number,
     weightNumber: number,
 ) => {
-    const avgSpeed = distance / (time / 60);
+    const avgSpeed = distanceNumber / (durationNumber / 60);
     const met = getMETForActivity(activity, avgSpeed);
 
-    return met * weightNumber * (time / 60);
+    return met * weightNumber * (durationNumber / 60);
 };
 
 /**
@@ -82,15 +90,17 @@ const getMETForActivity = (activity: any, avgSpeed: number) => {
 };
 
 /**
- * CreateSportUnit component allows users to log new sport activities.
- * Users can input activity details such as distance, duration, and description.
- * The component calculates calories burned based on the input and selected activity.
+ * CreateSportUnit is a component for logging a new physical activity.
+ * It allows users to input details such as distance, duration, and description
+ * of the activity, and select from predefined activities like Running, Walking,
+ * Swimming, and Biking. It calculates the calories burned based on user input
+ * and saves the activity to the database.
  *
  * @component
- * @returns {JSX.Element} A view allowing the user to log a new sport activity.
+ * @returns {JSX.Element} A form for inputting and saving a new activity.
  */
 export default function CreateSportUnit() {
-    // TODO: fix const {user, setCalories} = useUser();
+    const { user, getDailyCalories } = useUser();
     const [inputError, setInputError] = useState(true);
     // Inputs
     const [distanceValue, setDistanceValue] = useState("");
@@ -106,15 +116,28 @@ export default function CreateSportUnit() {
     ];
 
     /**
-     * Validates all inputs and saves a new sport unit to the database.
-     * @function
-     * @param {void} None
-     * @return {void} None
+     * Clears all input fields and resets their values to default.
+     * Resets distance, duration, description, and selected activity to empty strings.
+     * Sets input error state to false.
      */
-    const handleSave = () => {
+    const clearFields = () => {
+        setDistanceValue("");
+        setDurationValue("");
+        setDescriptionValue("");
+        setSelectedActivity("");
+        setInputError(false);
+    };
+
+    /**
+     * Saves the current activity with the provided details.
+     * Parses distance and duration from the input values, calculates the calories burned
+     * based on the selected activity and user's weight, and saves the activity to the database.
+     * Clears input fields upon successful saving or sets an input error if validation fails.
+     */
+    const handleSaveActivity = async () => {
         const distanceNumber = parseFloat(distanceValue);
         const durationNumber = parseFloat(durationValue);
-        // TODO: fix const weightNumber = user.weight;
+        const weightNumber = user.weight;
 
         if (
             !isNaN(distanceNumber) &&
@@ -123,19 +146,36 @@ export default function CreateSportUnit() {
             descriptionValue !== ""
         ) {
             setInputError(false);
-            const calculatedCalories = calculateCalories(
-                selectedActivity,
-                distanceNumber,
-                durationNumber,
-                // TODO: fix weightNumber
-                // 0 is temporary fix for needing 4 params
-                0 || 0,
-            );
-            // TODO: fix setCalories(previousCalories => previousCalories + calculatedCalories);
+            saveActivity(user.id, {
+                name: selectedActivity,
+                description: descriptionValue,
+                calories: calculateCalories(
+                    selectedActivity,
+                    distanceNumber,
+                    durationNumber,
+                    weightNumber,
+                ),
+                date: today,
+            });
+            clearFields();
+            getDailyCalories();
         } else {
             setInputError(true);
         }
     };
+
+    useEffect(() => {
+        if (
+            !isNaN(parseFloat(distanceValue)) &&
+            !isNaN(parseFloat(durationValue)) &&
+            selectedActivity !== "" &&
+            descriptionValue !== ""
+        ) {
+            setInputError(false);
+        } else {
+            setInputError(true);
+        }
+    }, [distanceValue, durationValue, selectedActivity, descriptionValue]);
 
     return (
         <PaperProvider theme={theme}>
@@ -152,8 +192,31 @@ export default function CreateSportUnit() {
             >
                 <Text>{getDate()}</Text>
                 <TitleMajor text="Log New" />
-                <TitleMiddle text="Activity" />
+                <View
+                    style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginRight: 10,
+                    }}
+                >
+                    <TitleMiddle text="Activity" />
+                    <Button
+                        style={{ flex: 0, alignSelf: "flex-end" }}
+                        icon="close"
+                        mode="contained"
+                        rippleColor="red"
+                        onPress={clearFields}
+                    >
+                        Clear all
+                    </Button>
+                </View>
                 <View style={{ marginTop: 20 }}>
+                    {inputError && selectedActivity === "" && (
+                        <Text style={{ color: "red", marginLeft: 10 }}>
+                            Please select an activity
+                        </Text>
+                    )}
                     {activities.map((activity) => (
                         <TouchableOpacity
                             key={activity.name}
@@ -205,6 +268,9 @@ export default function CreateSportUnit() {
                         padding: 20,
                     }}
                 >
+                    {inputError && distanceValue === "" && (
+                        <Text style={{ color: "red" }}>Enter a distance</Text>
+                    )}
                     <TextInput
                         style={{ marginBottom: 20 }}
                         mode="outlined"
@@ -215,8 +281,11 @@ export default function CreateSportUnit() {
                         onChangeText={(distanceValue) =>
                             setDistanceValue(distanceValue)
                         }
-                        // TODO: fix error={inputError}
+                        error={inputError}
                     />
+                    {inputError && distanceValue === "" && (
+                        <Text style={{ color: "red" }}>Enter a duration</Text>
+                    )}
                     <TextInput
                         style={{ marginBottom: 20 }}
                         mode="outlined"
@@ -227,8 +296,13 @@ export default function CreateSportUnit() {
                         onChangeText={(durationValue) =>
                             setDurationValue(durationValue)
                         }
-                        // TODO: fix error={inputError}
+                        error={inputError}
                     />
+                    {inputError && distanceValue === "" && (
+                        <Text style={{ color: "red" }}>
+                            Enter a description
+                        </Text>
+                    )}
                     <TextInput
                         style={{ marginBottom: 20 }}
                         mode="outlined"
@@ -239,10 +313,10 @@ export default function CreateSportUnit() {
                         onChangeText={(descriptionValue) =>
                             setDescriptionValue(descriptionValue)
                         }
-                        // TODO: fix error={inputError}
+                        error={inputError}
                     />
                     <TouchableOpacity
-                        onPress={handleSave}
+                        onPress={handleSaveActivity}
                         style={{
                             backgroundColor: "#1A5A41",
                             padding: 10,
