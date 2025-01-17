@@ -1,11 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-} from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { TitleMiddle } from "../atoms/TitleMiddle";
