@@ -48,10 +48,10 @@ const calculateCalories = (
     durationNumber: number,
     weightNumber: number,
 ) => {
-    const avgSpeed = distanceNumber / (durationNumber / 60);
+    const avgSpeed = distanceNumber / (durationNumber * 60);
     const met = getMETForActivity(activity, avgSpeed);
 
-    return met * weightNumber * (durationNumber / 60);
+    return met * weightNumber * (durationNumber * 60);
 };
 
 /**
