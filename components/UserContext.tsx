@@ -2,12 +2,29 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import * as SQLite from "expo-sqlite";
 import setupDatabase from "./Database/SQLite";
 
-const UserContext = createContext();
+type User = {
+    id?: number;
+    username?: string;
+    birthdate?: string;
+    height?: number;
+    gender?: string;
+    weight?: string | number;
+};
 
-export const useUser = () => useContext(UserContext);
+type UserContextType = {
+    user: User | null;
+    saveUser: (newUser: User) => Promise<void>;
+    calories: number;
+    setCalories: React.Dispatch<React.SetStateAction<number>>;
+    getDailyCalories: () => Promise<number | null | undefined>;
+};
+
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+export const useUser = () => useContext(UserContext)!;
 
 export const UserProvider = ({ children }: any) => {
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<User | null>(null);
     const [calories, setCalories] = useState(0);
 
     useEffect(() => {
@@ -30,7 +47,7 @@ export const UserProvider = ({ children }: any) => {
                                                                      Height_cm AS height,
                                                                      Gender AS gender
                                                                   FROM User WHERE ID = 1`);
-                const resultWeight = await db.getFirstAsync(
+                const resultWeight = await db.getFirstAsync<{ weight?: string | number }>(
                     `SELECT Weight AS weight FROM Weight WHERE UserID = 1 ORDER BY Date DESC`,
                 );
                 let weight = resultWeight?.weight;
@@ -42,10 +59,10 @@ export const UserProvider = ({ children }: any) => {
                         }
                     } catch (error) {
                         console.error("Error parsing weight:", error);
-                        weight = null;
+                        weight = undefined;
                     }
                 }
-                const userWithWeight = { ...resultUser, weight };
+                const userWithWeight = resultUser ? { ...resultUser, weight } : { weight };
                 console.log(userWithWeight);
                 setUser(userWithWeight);
             });
@@ -53,9 +70,18 @@ export const UserProvider = ({ children }: any) => {
         getDatabase();
     }, []);
 
-    const saveUser = async (newUser) => {
+    interface SaveUserParams {
+        id?: number;
+        username?: string;
+        birthdate?: string;
+        height?: number;
+        gender?: string;
+        weight?: string | number;
+    }
+
+    const saveUser = async (newUser: SaveUserParams): Promise<void> => {
         try {
-            const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+            const db: SQLite.SQLiteDatabase = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
             await db.withTransactionAsync(async () => {
                 await db.runAsync(
                     `INSERT INTO User (ID, Username, Birthdate, Height_cm, Gender)
@@ -66,29 +92,39 @@ export const UserProvider = ({ children }: any) => {
                          Height_cm=excluded.Height_cm,
                          Gender=excluded.Gender`,
                     [
-                        newUser.username,
-                        newUser.birthdate,
-                        newUser.height,
-                        newUser.gender,
+                        newUser.username !== undefined ? newUser.username : "",
+                        newUser.birthdate !== undefined ? newUser.birthdate : "",
+                        newUser.height !== undefined ? newUser.height : 0,
+                        newUser.gender !== undefined ? newUser.gender : "",
                     ],
                 );
                 console.log("User saved successfully!");
 
+                // Ensure weight is a number or null
+                let weightValue: number | null = null;
+                if (typeof newUser.weight === "number") {
+                    weightValue = newUser.weight;
+                } else if (typeof newUser.weight === "string") {
+                    const parsed = Number(newUser.weight);
+                    weightValue = isNaN(parsed) ? null : parsed;
+                } else {
+                    weightValue = null;
+                }
                 await db.runAsync(
                     `INSERT INTO Weight (UserID, Weight, Date)
                      VALUES (1, ?, datetime('now'))`,
-                    [newUser.weight],
+                    weightValue !== null && weightValue !== undefined ? weightValue : 0,
                 );
                 console.log("Weight saved successfully!");
 
-                const resultWeight = await db.getFirstAsync(
+                const resultWeight: { weight?: string | number } | undefined = (await db.getFirstAsync(
                     `SELECT Weight AS weight FROM Weight
                      WHERE UserID = 1
                      ORDER BY Date DESC
                      LIMIT 1`,
-                );
+                )) ?? undefined;
 
-                let weight = resultWeight?.weight;
+                let weight: string | number | undefined = resultWeight?.weight;
                 if (typeof weight === "string") {
                     weight = JSON.parse(weight)[0];
                 }
