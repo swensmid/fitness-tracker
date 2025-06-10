@@ -95,7 +95,7 @@ const getMETForActivity = (activity: string, avgSpeedKmh: number) => {
  * @component
  * @returns {JSX.Element} A form for inputting and saving a new activity.
  */
-export default function CreateSportUnit() {
+export default function CreateSportUnit({ navigation }: any) {
     const { user, getDailyCalories } = useUser();
     const [inputError, setInputError] = useState(true);
     // Inputs
@@ -155,6 +155,7 @@ export default function CreateSportUnit() {
             });
             clearFields();
             getDailyCalories();
+            navigation.navigate("Home")
         } else {
             setInputError(true);
         }
