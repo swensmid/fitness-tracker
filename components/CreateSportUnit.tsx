@@ -1,11 +1,6 @@
 import React, { useEffect } from "react";
 import { useState } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    ScrollView,
-} from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { DefaultTheme, PaperProvider } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { TitleMiddle } from "../atoms/TitleMiddle";
@@ -48,41 +43,42 @@ const calculateCalories = (
     durationNumber: number,
     weightNumber: number,
 ) => {
-    const avgSpeed = distanceNumber / (durationNumber / 60);
-    const met = getMETForActivity(activity, avgSpeed);
+    const avgSpeedKmh = distanceNumber / (durationNumber / 60);
+    const met = getMETForActivity(activity, avgSpeedKmh);
 
-    return met * weightNumber * (durationNumber * 60);
+    return met * weightNumber * (durationNumber / 60);
 };
 
 /**
  * Calculates MET (Metabolic Equivalent of Task) for a given activity and average speed.
  * The MET values are based on data from the Compendium of Physical Activities.
  * @param {string} activity - The activity to calculate MET for. Must be one of "Running", "Walking", "Swimming", "Biking".
- * @param {number} avgSpeed - The average speed of the activity in kilometers per hour.
+ * @param {number} avgSpeedKmh - The average speed of the activity in kilometers per hour.
  * @returns {number} The MET value for the given activity and average speed.
  */
-const getMETForActivity = (activity: any, avgSpeed: number) => {
+const getMETForActivity = (activity: string, avgSpeedKmh: number) => {
     switch (activity) {
         case "Running":
-            if (12 <= avgSpeed) return 11.5;
-            if (10 <= avgSpeed) return 10;
-            if (8 <= avgSpeed) return 8.3;
-            if (6.5 <= avgSpeed) return 5;
-            if (5 <= avgSpeed) return 3.8;
+            if (12 <= avgSpeedKmh) return 11.5;
+            if (10 <= avgSpeedKmh) return 10;
+            if (8 <= avgSpeedKmh) return 8.3;
+            if (6.5 <= avgSpeedKmh) return 5;
+            if (5 <= avgSpeedKmh) return 3.8;
             return 0;
         case "Walking":
-            if (6.5 <= avgSpeed) return 5;
-            if (5 <= avgSpeed) return 3.8;
-            if (3 <= avgSpeed) return 2.3;
+            if (6.5 <= avgSpeedKmh) return 5;
+            if (5 <= avgSpeedKmh) return 3.8;
+            if (3 <= avgSpeedKmh) return 2.3;
             return 0;
         case "Swimming":
-            if (5 <= avgSpeed) return 8;
-            if (0 < avgSpeed) return 6;
+            if (5.5 <= avgSpeedKmh) return 10;
+            if (4.0 <= avgSpeedKmh) return 8;
+            if (0 < avgSpeedKmh) return 6;
             return 0;
         case "Biking":
-            if (22 <= avgSpeed) return 10;
-            if (19 <= avgSpeed) return 8;
-            if (16 <= avgSpeed) return 6;
+            if (22 <= avgSpeedKmh) return 10;
+            if (19 <= avgSpeedKmh) return 8;
+            if (16 <= avgSpeedKmh) return 6;
             return 0;
         default:
             return 0;
