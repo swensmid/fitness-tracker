@@ -20,98 +20,69 @@ type Activity = {
     Date: string;
 };
 
-/**
- * The CalorieOverview component displays the total calories burned for the day,
- * including the basal metabolic rate. It also displays a list of activities
- * for the day, with options to delete or edit each activity.
- *
- * @param {Object} props - The props object passed from the parent component.
- * @param {Function} props.navigation - The navigation function passed from the parent component.
- * @returns {JSX.Element} The CalorieOverview component.
- */
 const CalorieOverview: React.FC = ({ navigation }: any) => {
     const { user, calories, setCalories, getDailyCalories } = useUser();
     const [activities, setActivities] = useState<Activity[]>([]);
+    const [totalCalories, setTotalCalories] = useState<string>("0");
+
     const basalMetabolicRate = user?.weight
         ? Math.round(
               10 * user.weight +
-                  6.25 * (user.height || 0) -
-                  5 * 30 +
+                  6.25 * (user.height || 0) - 
+                  5 * 30 + 
                   (user.gender === "M" ? 5 : -161),
           )
-        : 80085;
-
-    const [totalCalories, setTotalCalories] = useState<string | "0" | null>(
-        "-" + basalMetabolicRate.toString(),
-    );
+        : 0;
 
     useEffect(() => {
-        const fetchActivities = async () => {
+        const fetchData = async () => {
             try {
-                const activities = await getTodaysActivities();
+                const [fetchedActivities, fetchedCalories] = await Promise.all([
+                    getTodaysActivities(),
+                    getDailyCalories(),
+                ]);
 
-                if (
-                    activities === null ||
-                    activities === undefined ||
-                    !activities
-                ) {
-                    setActivities([]);
-                }
-                setActivities(activities as Activity[]);
+                setActivities(Array.isArray(fetchedActivities) ? fetchedActivities : []);
+
+                const validCalories = !isNaN(fetchedCalories) && fetchedCalories >= 0;
+                const netCalories = validCalories
+                    ? (-1 * (fetchedCalories + basalMetabolicRate)).toFixed(0)
+                    : (-1 * basalMetabolicRate).toString();
+
+                if (validCalories) setCalories(fetchedCalories);
+                setTotalCalories(netCalories);
             } catch (error) {
-                console.error("Error in fetchActivities:", error);
+                console.error("Error fetching data:", error);
+                setActivities([]);
+                setTotalCalories((-1 * basalMetabolicRate).toString());
             }
         };
 
-        const fetchCalories = async () => {
-            try {
-                const dailyCalories = await getDailyCalories();
-                if (
-                    dailyCalories === null ||
-                    dailyCalories === undefined ||
-                    isNaN(dailyCalories) ||
-                    dailyCalories < 0
-                ) {
-                    // TODO: DO NOT CAST TO STRING
-                    setTotalCalories("-" + basalMetabolicRate.toString());
-                    return {
-                        totalCalories: "-" + basalMetabolicRate.toString(),
-                    };
-                } else {
-                    setCalories(dailyCalories);
-                    const total = (-calories - basalMetabolicRate).toFixed(0);
-                    setTotalCalories(total);
-                }
-            } catch (error) {
-                console.error("Error in fetchCalories:", error);
-            }
-        };
-        fetchActivities();
-        fetchCalories();
-    }, [calories, totalCalories, calories, basalMetabolicRate]);
+        fetchData();
+    }, []);
 
     const handleDeleteActivity = (id: number) => {
         Alert.alert(
             "Delete Activity",
             "Are you sure you want to delete this activity?",
             [
-                {
-                    text: "Cancel",
-                    style: "cancel",
-                },
+                { text: "Cancel", style: "cancel" },
                 {
                     text: "Delete",
-                    onPress: () =>
-                        deleteActivity(id)
-                            .then(getDailyCalories)
-                            .then(() =>
-                                setActivities(
-                                    activities.filter(
-                                        (activity) => activity.Id !== id,
-                                    ),
-                                ),
-                            ),
                     style: "destructive",
+                    onPress: async () => {
+                        try {
+                            await deleteActivity(id);
+                            const updatedActivities = activities.filter(a => a.Id !== id);
+                            setActivities(updatedActivities);
+                            const updatedCalories = await getDailyCalories();
+                            setCalories(updatedCalories);
+                            const net = (-1 * (updatedCalories + basalMetabolicRate)).toFixed(0);
+                            setTotalCalories(net);
+                        } catch (error) {
+                            console.error("Error deleting activity:", error);
+                        }
+                    },
                 },
             ],
         );
@@ -124,9 +95,7 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             </Text>
             <View style={styles.icons}>
                 <TouchableOpacity
-                    onPress={() =>
-                        navigation.navigate("EditSportUnit", { activity: item })
-                    }
+                    onPress={() => navigation.navigate("EditSportUnit", { activity: item })}
                 >
                     <Ionicons name="create-outline" size={24} color="blue" />
                 </TouchableOpacity>
@@ -143,18 +112,12 @@ const CalorieOverview: React.FC = ({ navigation }: any) => {
             <Text style={styles.subtitle}>Activity</Text>
             <View style={styles.calorieCircle}>
                 <View style={styles.innerCircle}>
-                    <Text style={styles.calorieText}>
-                        {totalCalories === null
-                            ? basalMetabolicRate
-                            : totalCalories}
-                    </Text>
+                    <Text style={styles.calorieText}>{totalCalories}</Text>
                     <Text style={styles.calorieSubText}>Calories</Text>
                 </View>
             </View>
             {activities.length === 0 ? (
-                <Text style={styles.noActivityText}>
-                    No Recent Activity Found
-                </Text>
+                <Text style={styles.noActivityText}>No Recent Activity Found</Text>
             ) : (
                 <FlatList
                     data={activities}

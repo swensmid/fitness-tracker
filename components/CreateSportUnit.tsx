@@ -1,14 +1,18 @@
-import React, { useEffect } from "react";
-import { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { DefaultTheme, PaperProvider } from "react-native-paper";
+import React, { useEffect, useState } from "react";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+} from "react-native";
+import { DefaultTheme, PaperProvider, TextInput, Button } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { TitleMiddle } from "../atoms/TitleMiddle";
 import { TitleMajor } from "../atoms/TitleMajor";
-import { TextInput, Button } from "react-native-paper";
 import { useUser } from "./UserContext";
 import { saveActivity } from "./Database/Scripts";
 
+// Hilfsfunktion zum Formatieren des aktuellen Datums
 function getDate() {
     const today = new Date();
     const month = today.toLocaleString("default", { month: "long" });
@@ -28,15 +32,11 @@ const theme = {
     },
 };
 
-/**
- * Calculates the amount of calories burned in a given activity.
- * @function
- * @param {string} activity The type of activity.
- * @param {number} distanceNumber The distance of the activity in kilometers.
- * @param {number} durationNumber The duration of the activity in minutes.
- * @param {number} weightNumber The weight of the user in kilograms.
- * @return {number} The amount of calories burned.
- */
+// Bereinigt Benutzereingaben, entfernt HTML/Script-Inhalte
+const sanitizeInput = (text: string) => {
+    return text.replace(/<[^>]*>?/gm, "").trim();
+};
+
 const calculateCalories = (
     activity: string,
     distanceNumber: number,
@@ -45,65 +45,47 @@ const calculateCalories = (
 ) => {
     const avgSpeedKmh = distanceNumber / (durationNumber / 60);
     const met = getMETForActivity(activity, avgSpeedKmh);
-
     return met * weightNumber * (durationNumber / 60);
 };
 
-/**
- * Calculates MET (Metabolic Equivalent of Task) for a given activity and average speed.
- * The MET values are based on data from the Compendium of Physical Activities.
- * @param {string} activity - The activity to calculate MET for. Must be one of "Running", "Walking", "Swimming", "Biking".
- * @param {number} avgSpeedKmh - The average speed of the activity in kilometers per hour.
- * @returns {number} The MET value for the given activity and average speed.
- */
 const getMETForActivity = (activity: string, avgSpeedKmh: number) => {
     switch (activity) {
         case "Running":
-            if (12 <= avgSpeedKmh) return 11.5;
-            if (10 <= avgSpeedKmh) return 10;
-            if (8 <= avgSpeedKmh) return 8.3;
-            if (6.5 <= avgSpeedKmh) return 5;
-            if (5 <= avgSpeedKmh) return 3.8;
+            if (avgSpeedKmh >= 12) return 11.5;
+            if (avgSpeedKmh >= 10) return 10;
+            if (avgSpeedKmh >= 8) return 8.3;
+            if (avgSpeedKmh >= 6.5) return 5;
+            if (avgSpeedKmh >= 5) return 3.8;
             return 0;
         case "Walking":
-            if (6.5 <= avgSpeedKmh) return 5;
-            if (5 <= avgSpeedKmh) return 3.8;
-            if (3 <= avgSpeedKmh) return 2.3;
+            if (avgSpeedKmh >= 6.5) return 5;
+            if (avgSpeedKmh >= 5) return 3.8;
+            if (avgSpeedKmh >= 3) return 2.3;
             return 0;
         case "Swimming":
-            if (5.5 <= avgSpeedKmh) return 10;
-            if (4.0 <= avgSpeedKmh) return 8;
-            if (0 < avgSpeedKmh) return 6;
+            if (avgSpeedKmh >= 5.5) return 10;
+            if (avgSpeedKmh >= 4.0) return 8;
+            if (avgSpeedKmh > 0) return 6;
             return 0;
         case "Biking":
-            if (22 <= avgSpeedKmh) return 10;
-            if (19 <= avgSpeedKmh) return 8;
-            if (16 <= avgSpeedKmh) return 6;
+            if (avgSpeedKmh >= 22) return 10;
+            if (avgSpeedKmh >= 19) return 8;
+            if (avgSpeedKmh >= 16) return 6;
             return 0;
         default:
             return 0;
     }
 };
 
-/**
- * CreateSportUnit is a component for logging a new physical activity.
- * It allows users to input details such as distance, duration, and description
- * of the activity, and select from predefined activities like Running, Walking,
- * Swimming, and Biking. It calculates the calories burned based on user input
- * and saves the activity to the database.
- *
- * @component
- * @returns {JSX.Element} A form for inputting and saving a new activity.
- */
 export default function CreateSportUnit({ navigation }: any) {
     const { user, getDailyCalories } = useUser();
     const [inputError, setInputError] = useState(true);
-    // Inputs
+
     const [distanceValue, setDistanceValue] = useState("");
     const [durationValue, setDurationValue] = useState("");
     const [descriptionValue, setDescriptionValue] = useState("");
-    // Activities
     const [selectedActivity, setSelectedActivity] = useState("");
+
     const activities = [
         { name: "Running", icon: "run" },
         { name: "Walking", icon: "walk" },
@@ -111,11 +93,6 @@ export default function CreateSportUnit({ navigation }: any) {
         { name: "Biking", icon: "bike" },
     ];
 
-    /**
-     * Clears all input fields and resets their values to default.
-     * Resets distance, duration, description, and selected activity to empty strings.
-     * Sets input error state to false.
-     */
     const clearFields = () => {
         setDistanceValue("");
         setDurationValue("");
@@ -124,27 +101,23 @@ export default function CreateSportUnit({ navigation }: any) {
         setInputError(false);
     };
 
-    /**
-     * Saves the current activity with the provided details.
-     * Parses distance and duration from the input values, calculates the calories burned
-     * based on the selected activity and user's weight, and saves the activity to the database.
-     * Clears input fields upon successful saving or sets an input error if validation fails.
-     */
     const handleSaveActivity = async () => {
         const distanceNumber = parseFloat(distanceValue);
         const durationNumber = parseFloat(durationValue);
         const weightNumber = user.weight;
+        const sanitizedDescription = sanitizeInput(descriptionValue);
+        const validActivities = ["Running", "Walking", "Swimming", "Biking"];
 
         if (
             !isNaN(distanceNumber) &&
             !isNaN(durationNumber) &&
-            selectedActivity !== "" &&
-            descriptionValue !== ""
+            sanitizedDescription &&
+            validActivities.includes(selectedActivity)
         ) {
             setInputError(false);
-            saveActivity(user.id, {
+            await saveActivity(user.id, {
                 name: selectedActivity,
-                description: descriptionValue,
+                description: sanitizedDescription,
                 calories: calculateCalories(
                     selectedActivity,
                     distanceNumber,
@@ -155,40 +128,30 @@ export default function CreateSportUnit({ navigation }: any) {
             });
             clearFields();
             getDailyCalories();
-            navigation.navigate("Home")
+            navigation.navigate("Home");
         } else {
             setInputError(true);
         }
     };
 
     useEffect(() => {
-        if (
+        const isValid =
             !isNaN(parseFloat(distanceValue)) &&
             !isNaN(parseFloat(durationValue)) &&
             selectedActivity !== "" &&
-            descriptionValue !== ""
-        ) {
-            setInputError(false);
-        } else {
-            setInputError(true);
-        }
+            descriptionValue.trim() !== "";
+        setInputError(!isValid);
     }, [distanceValue, durationValue, selectedActivity, descriptionValue]);
 
     return (
         <PaperProvider theme={theme}>
             <ScrollView
-                contentContainerStyle={{
-                    flexGrow: 1,
-                    justifyContent: "center",
-                }}
-                style={{
-                    flex: 1,
-                    flexDirection: "column",
-                    margin: 20,
-                }}
+                contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
+                style={{ flex: 1, margin: 20 }}
             >
                 <Text>{getDate()}</Text>
                 <TitleMajor text="Log New" />
+
                 <View
                     style={{
                         flexDirection: "row",
@@ -199,7 +162,7 @@ export default function CreateSportUnit({ navigation }: any) {
                 >
                     <TitleMiddle text="Activity" />
                     <Button
-                        style={{ flex: 0, alignSelf: "flex-end" }}
+                        style={{ alignSelf: "flex-end" }}
                         icon="close"
                         mode="contained"
                         rippleColor="red"
@@ -208,6 +171,7 @@ export default function CreateSportUnit({ navigation }: any) {
                         Clear all
                     </Button>
                 </View>
+
                 <View style={{ marginTop: 20 }}>
                     {inputError && selectedActivity === "" && (
                         <Text style={{ color: "red", marginLeft: 10 }}>
@@ -239,24 +203,23 @@ export default function CreateSportUnit({ navigation }: any) {
                                         : "#000"
                                 }
                             />
-                            <View key={activity.name}>
-                                <Text
-                                    style={{
-                                        marginLeft: 10,
-                                        fontSize: 16,
-                                        fontWeight: "bold",
-                                        color:
-                                            selectedActivity === activity.name
-                                                ? "#fff"
-                                                : "#000",
-                                    }}
-                                >
-                                    {activity.name}
-                                </Text>
-                            </View>
+                            <Text
+                                style={{
+                                    marginLeft: 10,
+                                    fontSize: 16,
+                                    fontWeight: "bold",
+                                    color:
+                                        selectedActivity === activity.name
+                                            ? "#fff"
+                                            : "#000",
+                                }}
+                            >
+                                {activity.name}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
+
                 <View
                     style={{
                         flexDirection: "column",
@@ -275,12 +238,10 @@ export default function CreateSportUnit({ navigation }: any) {
                         label="Distance (km)"
                         value={distanceValue}
                         placeholder="e.g. 10.5"
-                        onChangeText={(distanceValue) =>
-                            setDistanceValue(distanceValue)
-                        }
+                        onChangeText={setDistanceValue}
                         error={inputError}
                     />
-                    {inputError && distanceValue === "" && (
+                    {inputError && durationValue === "" && (
                         <Text style={{ color: "red" }}>Enter a duration</Text>
                     )}
                     <TextInput
@@ -290,15 +251,11 @@ export default function CreateSportUnit({ navigation }: any) {
                         label="Duration (min)"
                         value={durationValue}
                         placeholder="e.g. 45"
-                        onChangeText={(durationValue) =>
-                            setDurationValue(durationValue)
-                        }
+                        onChangeText={setDurationValue}
                         error={inputError}
                     />
-                    {inputError && distanceValue === "" && (
-                        <Text style={{ color: "red" }}>
-                            Enter a description
-                        </Text>
+                    {inputError && descriptionValue === "" && (
+                        <Text style={{ color: "red" }}>Enter a description</Text>
                     )}
                     <TextInput
                         style={{ marginBottom: 20 }}
@@ -307,11 +264,12 @@ export default function CreateSportUnit({ navigation }: any) {
                         label="Description"
                         value={descriptionValue}
                         placeholder="e.g. Morning run with John"
-                        onChangeText={(descriptionValue) =>
-                            setDescriptionValue(descriptionValue)
+                        onChangeText={(text) =>
+                            setDescriptionValue(sanitizeInput(text))
                         }
                         error={inputError}
                     />
+
                     <TouchableOpacity
                         onPress={handleSaveActivity}
                         style={{

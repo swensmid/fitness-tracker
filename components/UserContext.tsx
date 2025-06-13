@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    ReactNode,
+} from "react";
 import * as SQLite from "expo-sqlite";
 import setupDatabase from "./Database/SQLite";
 
@@ -8,7 +14,7 @@ type User = {
     birthdate?: string;
     height?: number;
     gender?: string;
-    weight?: string | number;
+    weight?: number;
 };
 
 type UserContextType = {
@@ -21,67 +27,70 @@ type UserContextType = {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-export const useUser = () => useContext(UserContext)!;
+export const useUser = (): UserContextType => {
+    const context = useContext(UserContext);
+    if (!context) {
+        throw new Error("useUser must be used within a UserProvider");
+    }
+    return context;
+};
 
-export const UserProvider = ({ children }: any) => {
+interface Props {
+    children: ReactNode;
+}
+
+export const UserProvider = ({ children }: Props) => {
     const [user, setUser] = useState<User | null>(null);
     const [calories, setCalories] = useState(0);
+    const verbose = false;
 
     useEffect(() => {
-        const initializeDatabase = async () => {
+        const initialize = async () => {
             try {
                 await setupDatabase();
+
+                const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+                await db.withTransactionAsync(async () => {
+                    const resultUser = await db.getFirstAsync<User>(`
+                        SELECT ID AS id, Username AS username, Birthdate AS birthdate,
+                               Height_cm AS height, Gender AS gender
+                        FROM User WHERE ID = 1
+                    `);
+
+                    let weight: number | undefined;
+                    const resultWeight = await db.getFirstAsync<{ weight?: string | number }>(`
+                        SELECT Weight AS weight FROM Weight
+                        WHERE UserID = 1 ORDER BY Date DESC LIMIT 1
+                    `);
+
+                    if (resultWeight?.weight !== undefined) {
+                        const raw = resultWeight.weight;
+                        weight = typeof raw === "number"
+                            ? raw
+                            : !isNaN(Number(raw))
+                            ? Number(raw)
+                            : undefined;
+                    }
+
+                    const combinedUser = resultUser
+                        ? { ...resultUser, weight }
+                        : weight !== undefined
+                        ? { weight }
+                        : null;
+
+                    if (verbose) console.log("Loaded user from DB:", combinedUser);
+                    setUser(combinedUser);
+                });
             } catch (error) {
-                console.error("Failed:", error);
+                console.error("Database init failed:", error);
             }
         };
-        initializeDatabase();
-        async function getDatabase() {
-            const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
-
-            await db.withTransactionAsync(async () => {
-                const resultUser = await db.getFirstAsync(`SELECT
-                                                                     ID AS id,
-                                                                     Username AS username,
-                                                                     Birthdate AS birthdate,
-                                                                     Height_cm AS height,
-                                                                     Gender AS gender
-                                                                  FROM User WHERE ID = 1`);
-                const resultWeight = await db.getFirstAsync<{ weight?: string | number }>(
-                    `SELECT Weight AS weight FROM Weight WHERE UserID = 1 ORDER BY Date DESC`,
-                );
-                let weight = resultWeight?.weight;
-                if (typeof weight === "string") {
-                    try {
-                        weight = JSON.parse(weight);
-                        if (Array.isArray(weight)) {
-                            weight = weight[0];
-                        }
-                    } catch (error) {
-                        console.error("Error parsing weight:", error);
-                        weight = undefined;
-                    }
-                }
-                const userWithWeight = resultUser ? { ...resultUser, weight } : { weight };
-                console.log(userWithWeight);
-                setUser(userWithWeight);
-            });
-        }
-        getDatabase();
+        initialize();
     }, []);
 
-    interface SaveUserParams {
-        id?: number;
-        username?: string;
-        birthdate?: string;
-        height?: number;
-        gender?: string;
-        weight?: string | number;
-    }
-
-    const saveUser = async (newUser: SaveUserParams): Promise<void> => {
+    const saveUser = async (newUser: User): Promise<void> => {
         try {
-            const db: SQLite.SQLiteDatabase = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
+            const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
             await db.withTransactionAsync(async () => {
                 await db.runAsync(
                     `INSERT INTO User (ID, Username, Birthdate, Height_cm, Gender)
@@ -92,86 +101,67 @@ export const UserProvider = ({ children }: any) => {
                          Height_cm=excluded.Height_cm,
                          Gender=excluded.Gender`,
                     [
-                        newUser.username !== undefined ? newUser.username : "",
-                        newUser.birthdate !== undefined ? newUser.birthdate : "",
-                        newUser.height !== undefined ? newUser.height : 0,
-                        newUser.gender !== undefined ? newUser.gender : "",
-                    ],
+                        newUser.username ?? "",
+                        newUser.birthdate ?? "",
+                        newUser.height ?? 0,
+                        newUser.gender ?? "",
+                    ]
                 );
-                console.log("User saved successfully!");
 
-                // Ensure weight is a number or null
                 let weightValue: number | null = null;
                 if (typeof newUser.weight === "number") {
                     weightValue = newUser.weight;
                 } else if (typeof newUser.weight === "string") {
                     const parsed = Number(newUser.weight);
                     weightValue = isNaN(parsed) ? null : parsed;
-                } else {
-                    weightValue = null;
-                }
-                await db.runAsync(
-                    `INSERT INTO Weight (UserID, Weight, Date)
-                     VALUES (1, ?, datetime('now'))`,
-                    weightValue !== null && weightValue !== undefined ? weightValue : 0,
-                );
-                console.log("Weight saved successfully!");
-
-                const resultWeight: { weight?: string | number } | undefined = (await db.getFirstAsync(
-                    `SELECT Weight AS weight FROM Weight
-                     WHERE UserID = 1
-                     ORDER BY Date DESC
-                     LIMIT 1`,
-                )) ?? undefined;
-
-                let weight: string | number | undefined = resultWeight?.weight;
-                if (typeof weight === "string") {
-                    weight = JSON.parse(weight)[0];
                 }
 
-                setUser({
-                    id: 1,
-                    ...newUser,
-                    weight,
-                });
+                if (weightValue !== null) {
+                    await db.runAsync(
+                        `INSERT INTO Weight (UserID, Weight, Date)
+                         VALUES (1, ?, datetime('now'))`,
+                        weightValue
+                    );
+                }
 
-                console.log("User and weight updated in context:", {
+                const latestWeight = await db.getFirstAsync<{ weight?: number }>(`
+                    SELECT Weight AS weight FROM Weight
+                    WHERE UserID = 1 ORDER BY Date DESC LIMIT 1
+                `);
+
+                const updatedUser: User = {
                     id: 1,
                     ...newUser,
-                    weight,
-                });
+                    weight: latestWeight?.weight ?? weightValue ?? undefined,
+                };
+
+                if (verbose) console.log("Saved user:", updatedUser);
+                setUser(updatedUser);
             });
         } catch (error) {
             console.error("Error in saveUser:", error);
         }
     };
 
-    const getDailyCalories = async () => {
+    const getDailyCalories = async (): Promise<number | null | undefined> => {
         try {
             const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
             const today = new Date().toISOString().split("T")[0];
 
-            const checkForActivityToday = await db.getFirstAsync(`
-                SELECT EXISTS (SELECT * FROM Activity WHERE Date = '${today}');
-            `);
-
-            if (!checkForActivityToday) {
-                console.log("No activity for today");
-                return null;
-            } else {
-                const dailyCalories = (await db.getFirstAsync(`
+            const result = await db.getFirstAsync<{ totalCalories?: number }>(`
                 SELECT SUM(Calories) AS totalCalories
                 FROM Activity
                 WHERE Date = '${today}'
-            `)) as { totalCalories: number };
+            `);
 
-                const totalCalories = dailyCalories.totalCalories;
-                console.log("Todays total calories:", totalCalories);
-                setCalories(totalCalories);
-                return totalCalories;
-            }
+            const total = result?.totalCalories ?? 0;
+
+            if (verbose) console.log("Today's calories:", total);
+            setCalories(total);
+            return total;
         } catch (error) {
             console.error("Error in getDailyCalories:", error);
+            return undefined;
         }
     };
 

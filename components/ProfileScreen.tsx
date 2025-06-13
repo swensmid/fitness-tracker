@@ -3,84 +3,80 @@ import {
     View,
     TextInput,
     Text,
-    Button,
     StyleSheet,
     TouchableOpacity,
+    Alert,
+    Platform,
 } from "react-native";
-import { UserProvider, useUser } from "./UserContext";
+import { useUser } from "./UserContext";
 import * as SQLite from "expo-sqlite";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const ProfileScreen = () => {
     const { user, saveUser } = useUser();
 
-    const [username, setUsername] = useState(user?.username || "");
-    const [gender, setGender] = useState(user?.gender || "M");
-    const [weight, setWeight] = useState(user?.weight?.toString() || "");
-    const [height, setHeight] = useState(user?.height?.toString() || "");
-    const [birthdate, setBirthdate] = useState(user?.birthdate || "");
-    //TODO: richtige werte einsetzen
-    const calculateCalorieBaseRate = () => {
-        const parsedWeight = parseFloat(weight || "0");
-        const parsedHeight = parseFloat(height || "0");
-        const age = birthdate
-            ? new Date().getFullYear() - new Date(birthdate).getFullYear()
-            : 0;
+    const [username, setUsername] = useState("");
+    const [gender, setGender] = useState("M");
+    const [weight, setWeight] = useState("");
+    const [height, setHeight] = useState("");
+    const [birthdate, setBirthdate] = useState("");
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
-        if (!parsedWeight || !parsedHeight || !age) return "0 Cals";
+    useEffect(() => {
+        if (user) {
+            setUsername(user.username || "");
+            setGender(user.gender || "M");
+            setWeight(user.weight?.toString() || "");
+            setHeight(user.height?.toString() || "");
+            setBirthdate(user.birthdate || "");
+        }
+    }, [user]);
 
-        if (gender === "M") {
-            return (
-                Math.round(
-                    10 * parsedWeight + 6.25 * parsedHeight - 5 * age + 5,
-                ) + " Cals"
-            );
-        } else {
-            return (
-                Math.round(
-                    10 * parsedWeight + 6.25 * parsedHeight - 5 * age - 161,
-                ) + " Cals"
-            );
+    const handleDateChange = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(false);
+        if (selectedDate) {
+            const isoDate = selectedDate.toISOString().split("T")[0];
+            setBirthdate(isoDate);
         }
     };
 
+    const calculateCalorieBaseRate = () => {
+        const parsedWeight = parseFloat(weight);
+        const parsedHeight = parseFloat(height);
+        const birth = new Date(birthdate);
+        const age =
+            birth instanceof Date && !isNaN(birth.valueOf())
+                ? new Date().getFullYear() - birth.getFullYear()
+                : 0;
+
+        if (!parsedWeight || !parsedHeight || age <= 0) return "0 Cals";
+
+        const rate =
+            10 * parsedWeight + 6.25 * parsedHeight - 5 * age +
+            (gender === "M" ? 5 : -161);
+
+        return `${Math.round(rate)} Cals`;
+    };
+
     const handleConfirm = () => {
-        if (!username || !height || !birthdate || !weight) {
-            alert("Please fill out all fields.");
+        if (!username || !birthdate || !weight || !height) {
+            Alert.alert("Missing Data", "Please fill out all fields.");
             return;
         }
 
         saveUser({
-            username: username,
-            birthdate: birthdate,
+            username,
+            birthdate,
             height: parseFloat(height),
-            gender,
+            gender: gender.toUpperCase() === "F" ? "F" : "M",
             weight: parseFloat(weight),
         });
-    };
-
-    const handleShowUserData = async () => {
-        const db = await SQLite.openDatabaseAsync("DatabaseFitnessTracker");
-        if (db) {
-            await db.withTransactionAsync(async () => {
-                const result = await db.getFirstAsync(`SELECT
-                                                                        ID AS id,
-                                                                        Username AS username,
-                                                                        Birthdate AS birthdate,
-                                                                        Height_cm AS height,
-                                                                        Gender AS gender
-                                                                     FROM User WHERE ID = 1`);
-                console.log(result);
-            });
-        } else {
-            console.log("womp");
-        }
     };
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Profile</Text>
 
-            {/* Name */}
             <Text style={styles.label}>Name</Text>
             <TextInput
                 style={styles.input}
@@ -89,7 +85,6 @@ const ProfileScreen = () => {
                 placeholder="Enter your name"
             />
 
-            {/* Gender */}
             <Text style={styles.label}>Gender</Text>
             <TextInput
                 style={styles.input}
@@ -99,7 +94,6 @@ const ProfileScreen = () => {
                 maxLength={1}
             />
 
-            {/* Weight */}
             <Text style={styles.label}>Weight (kg)</Text>
             <TextInput
                 style={styles.input}
@@ -109,7 +103,6 @@ const ProfileScreen = () => {
                 keyboardType="numeric"
             />
 
-            {/* Height */}
             <Text style={styles.label}>Height (cm)</Text>
             <TextInput
                 style={styles.input}
@@ -119,20 +112,29 @@ const ProfileScreen = () => {
                 keyboardType="numeric"
             />
 
-            {/* Birthday */}
             <Text style={styles.label}>Birthday</Text>
-            <TextInput
-                style={styles.input}
-                value={birthdate}
-                onChangeText={setBirthdate}
-                placeholder="YYYY-MM-DD"
-            />
+            <TouchableOpacity
+                style={styles.dateInput}
+                onPress={() => setShowDatePicker(true)}
+            >
+                <Text style={{ color: birthdate ? "#000" : "#888" }}>
+                    {birthdate || "Select your birthday"}
+                </Text>
+            </TouchableOpacity>
 
-            {/* Calorie Base Rate */}
+            {showDatePicker && (
+                <DateTimePicker
+                    value={birthdate ? new Date(birthdate) : new Date()}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    maximumDate={new Date()}
+                    onChange={handleDateChange}
+                />
+            )}
+
             <Text style={styles.label}>Calorie Base Rate</Text>
             <Text style={styles.calorie}>{calculateCalorieBaseRate()}</Text>
 
-            {/* Confirm Button */}
             <TouchableOpacity
                 style={styles.confirmButton}
                 onPress={handleConfirm}
@@ -167,6 +169,15 @@ const styles = StyleSheet.create({
         padding: 10,
         fontSize: 16,
         backgroundColor: "#fff",
+    },
+    dateInput: {
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 8,
+        padding: 12,
+        fontSize: 16,
+        backgroundColor: "#fff",
+        justifyContent: "center",
     },
     calorie: {
         fontSize: 18,
