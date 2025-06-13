@@ -23,6 +23,7 @@ type UserContextType = {
     calories: number;
     setCalories: React.Dispatch<React.SetStateAction<number>>;
     getDailyCalories: () => Promise<number | null | undefined>;
+    calorieBaseRate: number;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -42,7 +43,31 @@ interface Props {
 export const UserProvider = ({ children }: Props) => {
     const [user, setUser] = useState<User | null>(null);
     const [calories, setCalories] = useState(0);
+    const [calorieBaseRate, setCalorieBaseRate] = useState(0);
     const verbose = false;
+
+    // Calculate BMR from user data
+    const calculateBMR = (userData: User | null): number => {
+        if (!userData) return 0;
+        const { weight, height, gender, birthdate } = userData;
+        if (!weight || !height || !birthdate) return 0;
+
+        const birth = new Date(birthdate);
+        if (!(birth instanceof Date) || isNaN(birth.valueOf())) return 0;
+
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        if (age <= 0) return 0;
+
+        // Mifflin-St Jeor Equation
+        return Math.round(
+            10 * weight + 6.25 * height - 5 * age + (gender === "M" ? 5 : -161)
+        );
+    };
 
     useEffect(() => {
         const initialize = async () => {
@@ -80,6 +105,9 @@ export const UserProvider = ({ children }: Props) => {
 
                     if (verbose) console.log("Loaded user from DB:", combinedUser);
                     setUser(combinedUser);
+
+                    // Update BMR when user loads
+                    setCalorieBaseRate(calculateBMR(combinedUser));
                 });
             } catch (error) {
                 console.error("Database init failed:", error);
@@ -137,6 +165,9 @@ export const UserProvider = ({ children }: Props) => {
 
                 if (verbose) console.log("Saved user:", updatedUser);
                 setUser(updatedUser);
+
+                // Update BMR after saving user
+                setCalorieBaseRate(calculateBMR(updatedUser));
             });
         } catch (error) {
             console.error("Error in saveUser:", error);
@@ -167,7 +198,7 @@ export const UserProvider = ({ children }: Props) => {
 
     return (
         <UserContext.Provider
-            value={{ user, saveUser, calories, setCalories, getDailyCalories }}
+            value={{ user, saveUser, calories, setCalories, getDailyCalories, calorieBaseRate }}
         >
             {children}
         </UserContext.Provider>

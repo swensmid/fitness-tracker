@@ -9,11 +9,10 @@ import {
     Platform,
 } from "react-native";
 import { useUser } from "./UserContext";
-import * as SQLite from "expo-sqlite";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const ProfileScreen = () => {
-    const { user, saveUser } = useUser();
+    const { user, saveUser, calorieBaseRate } = useUser();
 
     const [username, setUsername] = useState("");
     const [gender, setGender] = useState("M");
@@ -40,24 +39,6 @@ const ProfileScreen = () => {
         }
     };
 
-    const calculateCalorieBaseRate = () => {
-        const parsedWeight = parseFloat(weight);
-        const parsedHeight = parseFloat(height);
-        const birth = new Date(birthdate);
-        const age =
-            birth instanceof Date && !isNaN(birth.valueOf())
-                ? new Date().getFullYear() - birth.getFullYear()
-                : 0;
-
-        if (!parsedWeight || !parsedHeight || age <= 0) return "0 Cals";
-
-        const rate =
-            10 * parsedWeight + 6.25 * parsedHeight - 5 * age +
-            (gender === "M" ? 5 : -161);
-
-        return `${Math.round(rate)} Cals`;
-    };
-
     const handleConfirm = () => {
         if (!username || !birthdate || !weight || !height) {
             Alert.alert("Missing Data", "Please fill out all fields.");
@@ -70,6 +51,8 @@ const ProfileScreen = () => {
             height: parseFloat(height),
             gender: gender.toUpperCase() === "F" ? "F" : "M",
             weight: parseFloat(weight),
+        }).then(() => {
+            Alert.alert("Success", "Profile saved!");
         });
     };
 
@@ -133,12 +116,9 @@ const ProfileScreen = () => {
             )}
 
             <Text style={styles.label}>Calorie Base Rate</Text>
-            <Text style={styles.calorie}>{calculateCalorieBaseRate()}</Text>
+            <Text style={styles.calorie}>{calorieBaseRate} Cals</Text>
 
-            <TouchableOpacity
-                style={styles.confirmButton}
-                onPress={handleConfirm}
-            >
+            <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
                 <Text style={styles.confirmText}>Confirm</Text>
             </TouchableOpacity>
         </View>

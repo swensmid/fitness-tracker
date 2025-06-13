@@ -11,23 +11,11 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./components/HomeScreen";
 import ProfileScreen from "./components/ProfileScreen";
+import WeightScreen from "./components/WeightScreen";
+import FoodsScreen from "./components/FoodScreen";
 import { UserProvider } from "./components/UserContext";
 import CreateSportUnit from "./components/CreateSportUnit";
 const Tab = createBottomTabNavigator();
-
-// Delete this if Weight Screen is Created
-const WeightScreen = () => (
-    <View>
-        <Text>Sports Unit Screen</Text>
-    </View>
-);
-
-// Delete this if Foods is Created
-const FoodsScreen = () => (
-    <View>
-        <Text>Calendar Screen</Text>
-    </View>
-);
 
 const theme = {
     ...DefaultTheme,
